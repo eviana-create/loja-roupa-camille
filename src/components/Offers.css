@@ -1,0 +1,319 @@
+.offers {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  padding: 90px 32px;
+
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+
+  gap: 60px;
+
+  align-items: stretch;
+}
+
+/* CONTEÚDO */
+
+.offers-content {
+  min-height: 520px;
+
+  padding: 65px 50px;
+
+  background: #e8e4de;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.offers-label {
+  display: block;
+
+  margin-bottom: 22px;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  letter-spacing: 3px;
+
+  color: #777;
+}
+
+.offers-content h2 {
+  margin: 0;
+
+  font-size: clamp(40px, 5vw, 66px);
+
+  line-height: 1.04;
+
+  font-weight: 500;
+
+  letter-spacing: -2px;
+
+  color: #151515;
+}
+
+.offers-content p {
+  max-width: 380px;
+
+  margin-top: 25px;
+
+  font-size: 15px;
+
+  line-height: 1.7;
+
+  color: #666;
+}
+
+/* BOTÃO */
+
+.offers-button {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 22px;
+
+  width: fit-content;
+
+  margin-top: 32px;
+
+  padding: 15px 22px;
+
+  background: #111;
+
+  color: #fff;
+
+  text-decoration: none;
+
+  font-size: 12px;
+
+  font-weight: 500;
+
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease;
+}
+
+.offers-button span {
+  font-size: 17px;
+
+  transition: transform 0.25s ease;
+}
+
+.offers-button:hover {
+  background: #292929;
+
+  transform: translateY(-2px);
+}
+
+.offers-button:hover span {
+  transform: translateX(4px);
+}
+
+/* PRODUTO */
+
+.offers-product {
+  position: relative;
+
+  min-height: 520px;
+
+  overflow: hidden;
+
+  background: #ddd;
+}
+
+.offers-product img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition: transform 0.7s ease;
+}
+
+.offers-product:hover img {
+  transform: scale(1.03);
+}
+
+/* DESCONTO */
+
+.offers-discount {
+  position: absolute;
+
+  z-index: 3;
+
+  top: 20px;
+  left: 20px;
+
+  padding: 9px 13px;
+
+  background: #111;
+
+  color: #fff;
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+  letter-spacing: 1px;
+}
+
+/* INFORMAÇÕES DO PRODUTO */
+
+.offers-product-info {
+  position: absolute;
+
+  z-index: 3;
+
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+
+  padding: 18px 20px;
+
+  background: rgba(255, 255, 255, 0.92);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.offers-product-info > div:first-child span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  font-size: 9px;
+
+  letter-spacing: 1.5px;
+
+  color: #888;
+}
+
+.offers-product-info h3 {
+  margin: 0;
+
+  font-size: 16px;
+
+  font-weight: 500;
+
+  color: #171717;
+}
+
+/* PREÇO */
+
+.offers-price {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  gap: 3px;
+}
+
+.offers-old-price {
+  font-size: 11px;
+
+  color: #999;
+
+  text-decoration: line-through;
+}
+
+.offers-price strong {
+  font-size: 17px;
+
+  font-weight: 600;
+
+  color: #111;
+}
+
+/* TABLET */
+
+@media (max-width: 900px) {
+
+  .offers {
+    grid-template-columns: 1fr 1fr;
+
+    gap: 25px;
+
+    padding: 70px 24px;
+  }
+
+  .offers-content {
+    min-height: 450px;
+
+    padding: 40px 30px;
+  }
+
+  .offers-product {
+    min-height: 450px;
+  }
+
+  .offers-content h2 {
+    font-size: 43px;
+  }
+
+}
+
+/* CELULAR */
+
+@media (max-width: 700px) {
+
+  .offers {
+    display: flex;
+
+    flex-direction: column;
+
+    padding: 60px 16px;
+
+    gap: 14px;
+  }
+
+  .offers-content {
+    min-height: auto;
+
+    padding: 50px 28px;
+  }
+
+  .offers-content h2 {
+    font-size: 42px;
+
+    letter-spacing: -1.5px;
+  }
+
+  .offers-content p {
+    margin-top: 20px;
+
+    font-size: 14px;
+  }
+
+  .offers-button {
+    margin-top: 27px;
+  }
+
+  .offers-product {
+    height: 480px;
+
+    min-height: 480px;
+  }
+
+  .offers-product-info {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+
+    padding: 16px;
+  }
+
+}
