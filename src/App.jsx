@@ -5,6 +5,7 @@ import Products from "./components/Products";
 import Offers from "./components/Offers";
 import Benefits from "./components/Benefits";
 import Instagram from "./components/Instagram";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -16,21 +17,7 @@ function App() {
       <Offers />
       <Benefits />
       <Instagram />
-
-
-      <main
-        style={{
-          minHeight: "100vh",
-          padding: "80px 20px",
-          textAlign: "center",
-        }}
-      >
-        <h1>Minha Loja</h1>
-
-        <p style={{ marginTop: "15px" }}>
-          Nossa loja está começando.
-        </p>
-      </main>
+      <Footer />
     </>
   );
 }
