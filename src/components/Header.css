@@ -1,0 +1,275 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.header-container {
+  max-width: 1400px;
+  height: 78px;
+  margin: 0 auto;
+  padding: 0 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* LOGO */
+
+.logo {
+  color: #111;
+  text-decoration: none;
+
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 4px;
+
+  white-space: nowrap;
+}
+
+/* MENU DESKTOP */
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+}
+
+.desktop-nav a {
+  position: relative;
+
+  color: #333;
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition: color 0.25s ease;
+}
+
+.desktop-nav a::after {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  bottom: -7px;
+
+  width: 0;
+  height: 1px;
+
+  background: #111;
+
+  transition: width 0.25s ease;
+}
+
+.desktop-nav a:hover {
+  color: #000;
+}
+
+.desktop-nav a:hover::after {
+  width: 100%;
+}
+
+/* AÇÕES */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button {
+  position: relative;
+
+  width: 42px;
+  height: 42px;
+
+  border: none;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  color: #111;
+
+  border-radius: 50%;
+
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease;
+}
+
+.icon-button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+}
+
+.icon-button svg {
+  width: 21px;
+  height: 21px;
+}
+
+/* CONTADOR DO CARRINHO */
+
+.cart-count {
+  position: absolute;
+
+  top: 2px;
+  right: 1px;
+
+  min-width: 17px;
+  height: 17px;
+
+  padding: 0 4px;
+
+  border-radius: 50%;
+
+  background: #111;
+  color: white;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* MENU MOBILE */
+
+.menu-button {
+  display: none;
+
+  width: 42px;
+  height: 42px;
+
+  padding: 8px;
+
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.menu-button span {
+  display: block;
+
+  width: 22px;
+  height: 1.5px;
+
+  margin: 5px auto;
+
+  background: #111;
+}
+
+/* MENU MOBILE ABERTO */
+
+.mobile-menu {
+  display: none;
+}
+
+/* TABLET */
+
+@media (max-width: 900px) {
+
+  .desktop-nav {
+    gap: 18px;
+  }
+
+  .desktop-nav a {
+    font-size: 13px;
+  }
+
+}
+
+/* CELULAR */
+
+@media (max-width: 700px) {
+
+  .header-container {
+    height: 68px;
+    padding: 0 16px;
+  }
+
+  .menu-button {
+    display: block;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+
+  .logo {
+    font-size: 19px;
+    letter-spacing: 3px;
+  }
+
+  .header-actions {
+    gap: 2px;
+  }
+
+  .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* MENU MOBILE */
+
+  .mobile-menu {
+    display: flex;
+
+    flex-direction: column;
+
+    max-height: 0;
+    overflow: hidden;
+
+    opacity: 0;
+
+    background: rgba(255, 255, 255, 0.94);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    transition:
+      max-height 0.35s ease,
+      opacity 0.25s ease;
+  }
+
+  .mobile-menu.open {
+    max-height: 400px;
+    opacity: 1;
+
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .mobile-menu a {
+    padding: 18px 24px;
+
+    color: #222;
+    text-decoration: none;
+
+    font-size: 15px;
+
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+    transition: background 0.2s ease;
+  }
+
+  .mobile-menu a:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+}

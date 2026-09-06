@@ -1,0 +1,197 @@
+.categories {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  padding: 90px 32px;
+}
+
+/* CABEÇALHO */
+
+.categories-header {
+  text-align: center;
+
+  margin-bottom: 45px;
+}
+
+.categories-header > span {
+  display: block;
+
+  margin-bottom: 12px;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  letter-spacing: 3px;
+
+  color: #777;
+}
+
+.categories-header h2 {
+  margin: 0;
+
+  font-size: clamp(32px, 4vw, 46px);
+
+  font-weight: 500;
+
+  letter-spacing: -1.5px;
+
+  color: #171717;
+}
+
+/* GRID */
+
+.categories-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 18px;
+}
+
+/* CARD */
+
+.category-card {
+  position: relative;
+
+  display: block;
+
+  height: 480px;
+
+  overflow: hidden;
+
+  text-decoration: none;
+
+  background: #ddd;
+}
+
+/* IMAGEM */
+
+.category-card img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  display: block;
+
+  transition: transform 0.7s ease;
+}
+
+/* ESCURECIMENTO */
+
+.category-card::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.65),
+    rgba(0, 0, 0, 0.05) 60%
+  );
+}
+
+/* TEXTO */
+
+.category-overlay {
+  position: absolute;
+
+  z-index: 2;
+
+  left: 28px;
+  right: 28px;
+  bottom: 26px;
+
+  color: #fff;
+}
+
+.category-overlay h3 {
+  margin: 0;
+
+  font-size: 28px;
+
+  font-weight: 500;
+
+  letter-spacing: -0.5px;
+}
+
+.category-overlay span {
+  display: block;
+
+  margin-top: 8px;
+
+  font-size: 12px;
+
+  letter-spacing: 0.5px;
+
+  opacity: 0.85;
+}
+
+/* HOVER */
+
+.category-card:hover img {
+  transform: scale(1.06);
+}
+
+.category-card:hover .category-overlay span {
+  opacity: 1;
+}
+
+/* TABLET */
+
+@media (max-width: 900px) {
+
+  .categories {
+    padding: 70px 24px;
+  }
+
+  .category-card {
+    height: 400px;
+  }
+
+  .category-overlay {
+    left: 20px;
+    bottom: 20px;
+  }
+
+  .category-overlay h3 {
+    font-size: 23px;
+  }
+
+}
+
+/* CELULAR */
+
+@media (max-width: 700px) {
+
+  .categories {
+    padding: 60px 16px;
+  }
+
+  .categories-header {
+    margin-bottom: 28px;
+  }
+
+  .categories-header h2 {
+    font-size: 32px;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr;
+
+    gap: 14px;
+  }
+
+  .category-card {
+    height: 360px;
+  }
+
+  .category-overlay h3 {
+    font-size: 26px;
+  }
+
+}
