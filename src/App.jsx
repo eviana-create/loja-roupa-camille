@@ -3,6 +3,7 @@ import Hero from "./components/Hero";
 import Categories from "./components/Categories";
 import Products from "./components/Products";
 import Offers from "./components/Offers";
+import Benefits from "./components/Benefits";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Categories />
       <Products />
       <Offers />
+      <Benefits />
 
 
       <main
