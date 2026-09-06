@@ -4,6 +4,7 @@ import Categories from "./components/Categories";
 import Products from "./components/Products";
 import Offers from "./components/Offers";
 import Benefits from "./components/Benefits";
+import Instagram from "./components/Instagram";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Products />
       <Offers />
       <Benefits />
+      <Instagram />
 
 
       <main
