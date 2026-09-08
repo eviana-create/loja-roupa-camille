@@ -11,6 +11,7 @@ import Instagram from "./components/Instagram";
 import Footer from "./components/Footer";
 
 import Loja from "./pages/Loja";
+import Produto from "./pages/Produto";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -54,10 +55,12 @@ function Home() {
 function App() {
   return (
     <BrowserRouter>
+
       <ScrollToTop />
 
       <Routes>
 
+        {/* HOME */}
         <Route
           path="/"
           element={
@@ -67,6 +70,7 @@ function App() {
           }
         />
 
+        {/* LOJA */}
         <Route
           path="/loja"
           element={
@@ -76,7 +80,18 @@ function App() {
           }
         />
 
+        {/* PRODUTO */}
+        <Route
+          path="/loja/produto/:id"
+          element={
+            <Layout>
+              <Produto />
+            </Layout>
+          }
+        />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
