@@ -1,8 +1,37 @@
 import { useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import "./Header.css";
 
 function Header() {
   const [menuAberto, setMenuAberto] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const voltarAoTopo = () => {
+    setMenuAberto(false);
+
+    if (location.pathname === "/") {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+
+      return;
+    }
+
+    navigate("/");
+  };
+
+  const irParaLoja = () => {
+    setMenuAberto(false);
+    navigate("/loja");
+  };
 
   return (
     <header className="header">
@@ -20,24 +49,53 @@ function Header() {
         </button>
 
         {/* LOGO */}
-        <a href="/" className="logo">
-          DIVA VITORIA 
-          <br/>FASHION
-        </a>
+        <button
+          type="button"
+          className="logo"
+          onClick={voltarAoTopo}
+        >
+          DIVA VITORIA
+          <br />
+          FASHION
+        </button>
 
         {/* MENU DESKTOP */}
         <nav className="desktop-nav">
-          <a href="/">Início</a>
-          <a href="#feminino">Feminino</a>
-          <a href="#masculino">Masculino</a>
-          <a href="#acessorios">Acessórios</a>
-          <a href="#ofertas">Ofertas</a>
+
+          <button
+            type="button"
+            onClick={voltarAoTopo}
+          >
+            Início
+          </button>
+
+          <a href="/#feminino">
+            Feminino
+          </a>
+
+          <a href="/#masculino">
+            Masculino
+          </a>
+
+          <a href="/#acessorios">
+            Acessórios
+          </a>
+
+          <a href="/#ofertas">
+            Ofertas
+          </a>
+
         </nav>
 
         {/* AÇÕES */}
         <div className="header-actions">
 
-          <button className="icon-button" aria-label="Pesquisar">
+          {/* PESQUISA */}
+          <button
+            className="icon-button"
+            aria-label="Pesquisar"
+            onClick={irParaLoja}
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -49,7 +107,12 @@ function Header() {
             </svg>
           </button>
 
-          <button className="icon-button cart-button" aria-label="Carrinho">
+          {/* CARRINHO */}
+          <button
+            className="icon-button cart-button"
+            aria-label="Carrinho"
+            onClick={irParaLoja}
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -68,27 +131,53 @@ function Header() {
       </div>
 
       {/* MENU MOBILE */}
-      <div className={`mobile-menu ${menuAberto ? "open" : ""}`}>
+      <div
+        className={`mobile-menu ${
+          menuAberto ? "open" : ""
+        }`}
+      >
 
-        <a href="/" onClick={() => setMenuAberto(false)}>
+        <button
+          type="button"
+          onClick={voltarAoTopo}
+        >
           Início
-        </a>
+        </button>
 
-        <a href="#feminino" onClick={() => setMenuAberto(false)}>
+        <a
+          href="/#feminino"
+          onClick={() => setMenuAberto(false)}
+        >
           Feminino
         </a>
 
-        <a href="#masculino" onClick={() => setMenuAberto(false)}>
+        <a
+          href="/#masculino"
+          onClick={() => setMenuAberto(false)}
+        >
           Masculino
         </a>
 
-        <a href="#acessorios" onClick={() => setMenuAberto(false)}>
+        <a
+          href="/#acessorios"
+          onClick={() => setMenuAberto(false)}
+        >
           Acessórios
         </a>
 
-        <a href="#ofertas" onClick={() => setMenuAberto(false)}>
+        <a
+          href="/#ofertas"
+          onClick={() => setMenuAberto(false)}
+        >
           Ofertas
         </a>
+
+        <button
+          type="button"
+          onClick={irParaLoja}
+        >
+          Ver produtos
+        </button>
 
       </div>
     </header>

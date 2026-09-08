@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 import Header from "./components/Header";
 import Hero from "./components/Hero";
@@ -11,33 +12,69 @@ import Footer from "./components/Footer";
 
 import Loja from "./pages/Loja";
 
-function Home() {
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+  }, [pathname]);
+
+  return null;
+}
+
+function Layout({ children }) {
   return (
     <>
       <Header />
 
-      <main>
-        <Hero />
-        <Categories />
-        <Products />
-        <Offers />
-        <Benefits />
-        <Instagram />
-      </main>
+      {children}
 
       <Footer />
     </>
   );
 }
 
+function Home() {
+  return (
+    <main>
+      <Hero />
+      <Categories />
+      <Products />
+      <Offers />
+      <Benefits />
+      <Instagram />
+    </main>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
+
       <Routes>
 
-        <Route path="/" element={<Home />} />
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <Home />
+            </Layout>
+          }
+        />
 
-        <Route path="/loja" element={<Loja />} />
+        <Route
+          path="/loja"
+          element={
+            <Layout>
+              <Loja />
+            </Layout>
+          }
+        />
 
       </Routes>
     </BrowserRouter>
