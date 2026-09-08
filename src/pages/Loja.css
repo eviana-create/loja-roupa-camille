@@ -1,0 +1,334 @@
+.loja {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  padding: 70px 32px 100px;
+}
+
+/* CABEÇALHO */
+
+.loja-header {
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  padding-bottom: 45px;
+
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.loja-label {
+  display: block;
+
+  margin-bottom: 14px;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  letter-spacing: 3px;
+
+  color: #777;
+}
+
+.loja-header h1 {
+  margin: 0;
+
+  font-size: clamp(42px, 5vw, 64px);
+
+  line-height: 1.05;
+
+  font-weight: 500;
+
+  letter-spacing: -2px;
+
+  color: #171717;
+}
+
+.loja-header p {
+  max-width: 430px;
+
+  margin-top: 18px;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+
+  color: #777;
+}
+
+.produto-count {
+  flex-shrink: 0;
+
+  font-size: 11px;
+
+  color: #777;
+}
+
+/* CONTROLES */
+
+.loja-controls {
+  padding: 28px 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+}
+
+/* BUSCA */
+
+.busca-container {
+  position: relative;
+
+  width: 280px;
+
+  display: flex;
+
+  align-items: center;
+}
+
+.busca-container svg {
+  position: absolute;
+
+  left: 0;
+
+  width: 18px;
+  height: 18px;
+
+  color: #777;
+}
+
+.busca-container input {
+  width: 100%;
+
+  padding: 10px 30px;
+
+  border: none;
+
+  border-bottom: 1px solid #ccc;
+
+  background: transparent;
+
+  outline: none;
+
+  color: #171717;
+
+  font-size: 12px;
+
+  transition: border-color 0.25s ease;
+}
+
+.busca-container input:focus {
+  border-color: #111;
+}
+
+.busca-container input::placeholder {
+  color: #999;
+}
+
+.busca-container button {
+  position: absolute;
+
+  right: 0;
+
+  border: none;
+
+  background: transparent;
+
+  color: #777;
+
+  font-size: 20px;
+
+  cursor: pointer;
+}
+
+/* CATEGORIAS */
+
+.categorias-filtro {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  flex-wrap: wrap;
+
+  justify-content: flex-end;
+}
+
+.categorias-filtro button {
+  padding: 9px 15px;
+
+  border: 1px solid transparent;
+
+  background: transparent;
+
+  color: #777;
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.categorias-filtro button:hover {
+  color: #111;
+}
+
+.categorias-filtro button.ativo {
+  border-color: #111;
+
+  background: #111;
+
+  color: #fff;
+}
+
+/* GRID */
+
+.loja-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 18px;
+}
+
+/* SEM PRODUTOS */
+
+.sem-produtos {
+  min-height: 300px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 18px;
+
+  color: #777;
+
+  font-size: 13px;
+}
+
+.sem-produtos button {
+  padding: 12px 18px;
+
+  border: none;
+
+  background: #111;
+
+  color: #fff;
+
+  cursor: pointer;
+
+  font-size: 11px;
+}
+
+/* TABLET */
+
+@media (max-width: 1000px) {
+
+  .loja {
+    padding: 60px 24px 80px;
+  }
+
+  .loja-grid {
+    grid-template-columns: repeat(2, 1fr);
+
+    row-gap: 40px;
+  }
+
+  .loja-controls {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .categorias-filtro {
+    justify-content: flex-start;
+  }
+
+}
+
+/* CELULAR */
+
+@media (max-width: 700px) {
+
+  .loja {
+    padding: 45px 16px 65px;
+  }
+
+  .loja-header {
+    display: block;
+
+    padding-bottom: 30px;
+  }
+
+  .loja-header h1 {
+    font-size: 42px;
+
+    letter-spacing: -1.5px;
+  }
+
+  .loja-header p {
+    font-size: 13px;
+  }
+
+  .produto-count {
+    display: block;
+
+    margin-top: 20px;
+  }
+
+  .loja-controls {
+    padding: 22px 0;
+
+    gap: 20px;
+  }
+
+  .busca-container {
+    width: 100%;
+  }
+
+  .categorias-filtro {
+    width: 100%;
+
+    flex-wrap: nowrap;
+
+    overflow-x: auto;
+
+    justify-content: flex-start;
+
+    padding-bottom: 5px;
+
+    scrollbar-width: none;
+  }
+
+  .categorias-filtro::-webkit-scrollbar {
+    display: none;
+  }
+
+  .categorias-filtro button {
+    flex-shrink: 0;
+  }
+
+  .loja-grid {
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 14px;
+  }
+
+}
