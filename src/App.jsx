@@ -1,3 +1,5 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Categories from "./components/Categories";
@@ -7,18 +9,38 @@ import Benefits from "./components/Benefits";
 import Instagram from "./components/Instagram";
 import Footer from "./components/Footer";
 
-function App() {
+import Loja from "./pages/Loja";
+
+function Home() {
   return (
     <>
       <Header />
-      <Hero />
-      <Categories />
-      <Products />
-      <Offers />
-      <Benefits />
-      <Instagram />
+
+      <main>
+        <Hero />
+        <Categories />
+        <Products />
+        <Offers />
+        <Benefits />
+        <Instagram />
+      </main>
+
       <Footer />
     </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+
+        <Route path="/" element={<Home />} />
+
+        <Route path="/loja" element={<Loja />} />
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 

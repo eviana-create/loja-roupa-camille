@@ -21,7 +21,8 @@ function Header() {
 
         {/* LOGO */}
         <a href="/" className="logo">
-          VITRINE
+          DIVA VITORIA 
+          <br/>FASHION
         </a>
 
         {/* MENU DESKTOP */}
