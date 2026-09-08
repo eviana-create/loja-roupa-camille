@@ -376,15 +376,11 @@ function Carrinho() {
 
           <button
             className="finalizar-compra"
-            onClick={() =>
-              alert(
-                "Checkout será implementado na próxima etapa."
-              )
-            }
+            onClick={() => navigate("/checkout")}
           >
             FINALIZAR COMPRA
           </button>
-
+          
           <button
             className="continuar-comprando"
             onClick={() => navigate("/loja")}

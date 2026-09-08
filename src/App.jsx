@@ -22,6 +22,10 @@ import Produto from "./pages/Produto";
 import { CarrinhoProvider } from "./context/CarrinhoContext";
 import Carrinho from "./pages/Carrinho";
 
+import Checkout from "./pages/Checkout";
+
+import PedidoConfirmado from "./pages/PedidoConfirmado";
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -99,6 +103,24 @@ function App() {
             element={
               <Layout>
                 <Carrinho />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/checkout"
+            element={
+              <Layout>
+                <Checkout />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/pedido-confirmado"
+            element={
+              <Layout>
+                <PedidoConfirmado />
               </Layout>
             }
           />
