@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
+
 import { useEffect } from "react";
 
 import Header from "./components/Header";
@@ -12,6 +18,8 @@ import Footer from "./components/Footer";
 
 import Loja from "./pages/Loja";
 import Produto from "./pages/Produto";
+
+import { CarrinhoProvider } from "./context/CarrinhoContext";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -31,9 +39,7 @@ function Layout({ children }) {
   return (
     <>
       <Header />
-
       {children}
-
       <Footer />
     </>
   );
@@ -55,43 +61,40 @@ function Home() {
 function App() {
   return (
     <BrowserRouter>
+      <CarrinhoProvider>
+        <ScrollToTop />
 
-      <ScrollToTop />
+        <Routes>
 
-      <Routes>
+          <Route
+            path="/"
+            element={
+              <Layout>
+                <Home />
+              </Layout>
+            }
+          />
 
-        {/* HOME */}
-        <Route
-          path="/"
-          element={
-            <Layout>
-              <Home />
-            </Layout>
-          }
-        />
+          <Route
+            path="/loja"
+            element={
+              <Layout>
+                <Loja />
+              </Layout>
+            }
+          />
 
-        {/* LOJA */}
-        <Route
-          path="/loja"
-          element={
-            <Layout>
-              <Loja />
-            </Layout>
-          }
-        />
+          <Route
+            path="/loja/produto/:id"
+            element={
+              <Layout>
+                <Produto />
+              </Layout>
+            }
+          />
 
-        {/* PRODUTO */}
-        <Route
-          path="/loja/produto/:id"
-          element={
-            <Layout>
-              <Produto />
-            </Layout>
-          }
-        />
-
-      </Routes>
-
+        </Routes>
+      </CarrinhoProvider>
     </BrowserRouter>
   );
 }

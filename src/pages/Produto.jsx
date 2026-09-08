@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+
 import produtos from "../data/produtos";
+import { useCarrinho } from "../context/CarrinhoContext";
+
 import "./Produto.css";
 
 function Produto() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { adicionarItem } = useCarrinho();
 
   const produto = produtos.find(
     (item) => item.id === id
@@ -68,25 +72,32 @@ function Produto() {
   };
 
   const adicionarAoCarrinho = () => {
-    if (!tamanhoSelecionado) {
-      alert("Selecione um tamanho.");
-      return;
-    }
+  if (!tamanhoSelecionado) {
+    alert("Selecione um tamanho.");
+    return;
+  }
 
-    if (!corSelecionada) {
-      alert("Selecione uma cor.");
-      return;
-    }
+  if (!corSelecionada) {
+    alert("Selecione uma cor.");
+    return;
+  }
 
-    if (estoqueAtual <= 0) {
-      alert("Este tamanho está esgotado.");
-      return;
-    }
+  if (estoqueAtual <= 0) {
+    alert("Este tamanho está esgotado.");
+    return;
+  }
 
-    alert(
-      `${produto.nome} adicionado ao carrinho!`
-    );
-  };
+  adicionarItem({
+    produto,
+    tamanho: tamanhoSelecionado,
+    cor: corSelecionada,
+    quantidade,
+  });
+
+  alert(
+    `${produto.nome} foi adicionado ao carrinho!`
+  );
+};
 
   return (
     <main className="produto-page">
