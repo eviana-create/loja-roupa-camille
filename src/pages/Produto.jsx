@@ -72,32 +72,34 @@ function Produto() {
   };
 
   const adicionarAoCarrinho = () => {
-  if (!tamanhoSelecionado) {
-    alert("Selecione um tamanho.");
-    return;
-  }
+    if (!tamanhoSelecionado) {
+      alert("Selecione um tamanho.");
+      return;
+    }
 
-  if (!corSelecionada) {
-    alert("Selecione uma cor.");
-    return;
-  }
+    if (!corSelecionada) {
+      alert("Selecione uma cor.");
+      return;
+    }
 
-  if (estoqueAtual <= 0) {
-    alert("Este tamanho está esgotado.");
-    return;
-  }
+    if (estoqueAtual <= 0) {
+      alert("Este tamanho está esgotado.");
+      return;
+    }
 
-  adicionarItem({
-    produto,
-    tamanho: tamanhoSelecionado,
-    cor: corSelecionada,
-    quantidade,
-  });
+    const adicionado = adicionarItem({
+      produto,
+      tamanho: tamanhoSelecionado,
+      cor: corSelecionada,
+      quantidade,
+    });
 
-  alert(
-    `${produto.nome} foi adicionado ao carrinho!`
-  );
-};
+    if (adicionado) {
+      alert(
+        `${produto.nome} foi adicionado ao carrinho!`
+      );
+    }
+  };
 
   return (
     <main className="produto-page">

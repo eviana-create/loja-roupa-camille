@@ -28,6 +28,14 @@ export function CarrinhoProvider({ children }) {
     cor,
     quantidade,
   }) => {
+    const estoqueDisponivel =
+      produto.estoque?.[tamanho] || 0;
+
+    if (estoqueDisponivel <= 0) {
+      alert("Este tamanho está esgotado.");
+      return false;
+    }
+
     setItens((itensAtuais) => {
       const itemExistente = itensAtuais.find(
         (item) =>
@@ -37,18 +45,33 @@ export function CarrinhoProvider({ children }) {
       );
 
       if (itemExistente) {
+        const novaQuantidade =
+          itemExistente.quantidade + quantidade;
+
+        if (novaQuantidade > estoqueDisponivel) {
+          alert(
+            `Você pode adicionar no máximo ${estoqueDisponivel} unidade${
+              estoqueDisponivel === 1 ? "" : "s"
+            } deste tamanho.`
+          );
+
+          return itensAtuais;
+        }
+
         return itensAtuais.map((item) =>
-          item.produtoId === produto.id &&
-          item.tamanho === tamanho &&
-          item.cor === cor
+          item.id === itemExistente.id
             ? {
                 ...item,
-                quantidade:
-                  item.quantidade + quantidade,
+                quantidade: novaQuantidade,
               }
             : item
         );
       }
+
+      const quantidadeFinal = Math.min(
+        quantidade,
+        estoqueDisponivel
+      );
 
       return [
         ...itensAtuais,
@@ -62,28 +85,42 @@ export function CarrinhoProvider({ children }) {
             produto.preco,
           tamanho,
           cor,
-          quantidade,
+          quantidade: quantidadeFinal,
+          estoqueDisponivel,
         },
       ];
     });
+
+    return true;
   };
 
   const removerItem = (id) => {
     setItens((itensAtuais) =>
-      itensAtuais.filter((item) => item.id !== id)
+      itensAtuais.filter(
+        (item) => item.id !== id
+      )
     );
   };
 
   const aumentarQuantidade = (id) => {
     setItens((itensAtuais) =>
-      itensAtuais.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantidade: item.quantidade + 1,
-            }
-          : item
-      )
+      itensAtuais.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+
+        if (
+          item.quantidade >=
+          item.estoqueDisponivel
+        ) {
+          return item;
+        }
+
+        return {
+          ...item,
+          quantidade: item.quantidade + 1,
+        };
+      })
     );
   };
 
@@ -94,11 +131,14 @@ export function CarrinhoProvider({ children }) {
           item.id === id
             ? {
                 ...item,
-                quantidade: item.quantidade - 1,
+                quantidade:
+                  item.quantidade - 1,
               }
             : item
         )
-        .filter((item) => item.quantidade > 0)
+        .filter(
+          (item) => item.quantidade > 0
+        )
     );
   };
 

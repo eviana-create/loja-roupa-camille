@@ -1,9 +1,11 @@
 import { useState } from "react";
 import {
-  Link,
   useLocation,
   useNavigate,
 } from "react-router-dom";
+
+import { useCarrinho } from "../context/CarrinhoContext";
+
 import "./Header.css";
 
 function Header() {
@@ -11,6 +13,8 @@ function Header() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { quantidadeTotal } = useCarrinho();
 
   const voltarAoTopo = () => {
     setMenuAberto(false);
@@ -33,14 +37,23 @@ function Header() {
     navigate("/loja");
   };
 
+  const irParaCarrinho = () => {
+    setMenuAberto(false);
+    navigate("/carrinho");
+  };
+
   return (
     <header className="header">
+
       <div className="header-container">
 
         {/* MENU MOBILE */}
+
         <button
           className="menu-button"
-          onClick={() => setMenuAberto(!menuAberto)}
+          onClick={() =>
+            setMenuAberto(!menuAberto)
+          }
           aria-label="Abrir menu"
         >
           <span></span>
@@ -49,6 +62,7 @@ function Header() {
         </button>
 
         {/* LOGO */}
+
         <button
           type="button"
           className="logo"
@@ -60,6 +74,7 @@ function Header() {
         </button>
 
         {/* MENU DESKTOP */}
+
         <nav className="desktop-nav">
 
           <button
@@ -88,9 +103,11 @@ function Header() {
         </nav>
 
         {/* AÇÕES */}
+
         <div className="header-actions">
 
           {/* PESQUISA */}
+
           <button
             className="icon-button"
             aria-label="Pesquisar"
@@ -102,16 +119,22 @@ function Header() {
               stroke="currentColor"
               strokeWidth="1.8"
             >
-              <circle cx="11" cy="11" r="7" />
+              <circle
+                cx="11"
+                cy="11"
+                r="7"
+              />
+
               <path d="M20 20l-4-4" />
             </svg>
           </button>
 
           {/* CARRINHO */}
+
           <button
             className="icon-button cart-button"
             aria-label="Carrinho"
-            onClick={irParaLoja}
+            onClick={irParaCarrinho}
           >
             <svg
               viewBox="0 0 24 24"
@@ -120,17 +143,34 @@ function Header() {
               strokeWidth="1.8"
             >
               <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6" />
-              <circle cx="10" cy="20" r="1" />
-              <circle cx="18" cy="20" r="1" />
+
+              <circle
+                cx="10"
+                cy="20"
+                r="1"
+              />
+
+              <circle
+                cx="18"
+                cy="20"
+                r="1"
+              />
             </svg>
 
-            <span className="cart-count">0</span>
+            {quantidadeTotal > 0 && (
+              <span className="cart-count">
+                {quantidadeTotal}
+              </span>
+            )}
+
           </button>
 
         </div>
+
       </div>
 
       {/* MENU MOBILE */}
+
       <div
         className={`mobile-menu ${
           menuAberto ? "open" : ""
@@ -146,28 +186,36 @@ function Header() {
 
         <a
           href="/#feminino"
-          onClick={() => setMenuAberto(false)}
+          onClick={() =>
+            setMenuAberto(false)
+          }
         >
           Feminino
         </a>
 
         <a
           href="/#masculino"
-          onClick={() => setMenuAberto(false)}
+          onClick={() =>
+            setMenuAberto(false)
+          }
         >
           Masculino
         </a>
 
         <a
           href="/#acessorios"
-          onClick={() => setMenuAberto(false)}
+          onClick={() =>
+            setMenuAberto(false)
+          }
         >
           Acessórios
         </a>
 
         <a
           href="/#ofertas"
-          onClick={() => setMenuAberto(false)}
+          onClick={() =>
+            setMenuAberto(false)
+          }
         >
           Ofertas
         </a>
@@ -179,7 +227,17 @@ function Header() {
           Ver produtos
         </button>
 
+        <button
+          type="button"
+          onClick={irParaCarrinho}
+        >
+          Carrinho
+          {quantidadeTotal > 0 &&
+            ` (${quantidadeTotal})`}
+        </button>
+
       </div>
+
     </header>
   );
 }

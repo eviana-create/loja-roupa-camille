@@ -20,6 +20,7 @@ import Loja from "./pages/Loja";
 import Produto from "./pages/Produto";
 
 import { CarrinhoProvider } from "./context/CarrinhoContext";
+import Carrinho from "./pages/Carrinho";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -89,6 +90,15 @@ function App() {
             element={
               <Layout>
                 <Produto />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/carrinho"
+            element={
+              <Layout>
+                <Carrinho />
               </Layout>
             }
           />
