@@ -25,6 +25,7 @@ import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
 
 import PedidoConfirmado from "./pages/PedidoConfirmado";
+import Admin from "./pages/admin/Admin";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -122,6 +123,12 @@ function App() {
               <Layout>
                 <PedidoConfirmado />
               </Layout>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={<Admin />    
             }
           />
 
