@@ -206,3 +206,251 @@
     grid-template-columns: 1fr;
   }
 }
+/* =========================================
+   LISTAGEM DE PRODUTOS
+   ========================================= */
+
+.admin-produtos {
+  max-width: 1200px;
+  margin: 30px auto 0;
+  padding: 30px;
+  border: 1px solid #e8e1dc;
+  border-radius: 18px;
+  background: white;
+}
+
+.admin-produtos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.admin-produtos-header h2 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+}
+
+.admin-produtos-header p {
+  margin: 0;
+  color: #777;
+}
+
+.admin-produtos-atualizar {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  background: #222;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.admin-produtos-atualizar:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.admin-produtos-carregando {
+  margin: 0;
+  color: #777;
+}
+
+.admin-produtos-vazio {
+  padding: 30px;
+  border-radius: 14px;
+  background: #f7f5f3;
+  text-align: center;
+  color: #777;
+}
+
+.admin-produtos-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(240px, 1fr)
+  );
+  gap: 18px;
+}
+
+.admin-produto-card {
+  border: 1px solid #e8e1dc;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.admin-produto-card:hover {
+  transform: translateY(-3px);
+  border-color: #d7c2ba;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+.admin-produto-imagem {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-produto-sem-imagem {
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f5f3;
+  color: #999;
+}
+
+.admin-produto-info {
+  padding: 18px;
+}
+
+.admin-produto-info h3 {
+  margin: 0 0 7px;
+  font-size: 1.05rem;
+}
+
+.admin-produto-categoria {
+  margin: 0 0 10px;
+  color: #777;
+  font-size: 0.85rem;
+}
+
+.admin-produto-preco {
+  font-size: 1.1rem;
+}
+
+.admin-produto-preco-antigo {
+  display: block;
+  margin-top: 4px;
+  color: #999;
+  font-size: 0.85rem;
+  text-decoration: line-through;
+}
+
+.admin-produto-footer {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-produto-status {
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.admin-produto-status.ativo {
+  background: #edf8ef;
+  color: #286b35;
+}
+
+.admin-produto-status.inativo {
+  background: #fcebea;
+  color: #a33;
+}
+
+.admin-produto-id {
+  color: #999;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .admin-produtos {
+    padding: 20px;
+  }
+
+  .admin-produtos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-produto-imagem,
+  .admin-produto-sem-imagem {
+    height: 320px;
+  }
+
+  .admin-produtos-atualizar {
+    width: 100%;
+  }
+}
+/* =========================================
+   AÇÕES DOS PRODUTOS
+   ========================================= */
+
+.admin-produto-acoes {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.admin-produto-acao {
+  border: 1px solid #e3ddd8;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #333;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-produto-acao:hover {
+  transform: translateY(-1px);
+}
+
+.admin-produto-acao.editar:hover {
+  background: #f5f0ed;
+  border-color: #cdbbb2;
+}
+
+.admin-produto-acao.status:hover {
+  background: #f1f7f2;
+  border-color: #b9d6bf;
+}
+
+.admin-produto-acao.excluir {
+  grid-column: 1 / -1;
+  color: #a33;
+  border-color: #ead1d1;
+}
+
+.admin-produto-acao.excluir:hover {
+  background: #fcebea;
+  border-color: #d9aaaa;
+}
+
+.admin-produto-acao:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .admin-produto-acoes {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-produto-acao.excluir {
+    grid-column: auto;
+  }
+}
+
