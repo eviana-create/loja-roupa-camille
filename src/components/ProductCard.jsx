@@ -8,7 +8,10 @@ function ProductCard({ produto }) {
     produto.imagens?.[0] || produto.imagem;
 
   const tag =
-    produto.tags?.[0] || produto.tag;
+    Array.isArray(produto.tags) &&
+    produto.tags.length > 0
+      ? produto.tags[produto.tags.length - 1]
+      : produto.tag;
 
   const abrirProduto = () => {
     navigate(`/loja/produto/${produto.id}`);

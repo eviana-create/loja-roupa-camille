@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
   collection,
-  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
 
 import { db } from "../firebase/firebaseConfig";
@@ -16,42 +16,44 @@ function Products() {
   const [carregando, setCarregando] =
     useState(true);
 
-  useEffect(() => {
-    async function carregarProdutos() {
-      try {
-        setCarregando(true);
+ useEffect(() => {
+  setCarregando(true);
 
-        const snapshot = await getDocs(
-          collection(db, "produtos")
+  const produtosRef = collection(db, "produtos");
+
+  const cancelarInscricao = onSnapshot(
+    produtosRef,
+    (snapshot) => {
+      const produtosFirebase =
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+      const produtosAtivos =
+        produtosFirebase.filter(
+          (produto) =>
+            produto.ativo !== false
         );
 
-        const produtosFirebase =
-          snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
+      setProdutos(produtosAtivos);
+      setCarregando(false);
+    },
+    (error) => {
+      console.error(
+        "Erro ao acompanhar produtos do Firebase:",
+        error
+      );
 
-        const produtosAtivos =
-          produtosFirebase.filter(
-            (produto) =>
-              produto.ativo !== false
-          );
-
-        setProdutos(produtosAtivos);
-      } catch (error) {
-        console.error(
-          "Erro ao carregar produtos:",
-          error
-        );
-
-        setProdutos([]);
-      } finally {
-        setCarregando(false);
-      }
+      setProdutos([]);
+      setCarregando(false);
     }
+  );
 
-    carregarProdutos();
-  }, []);
+  return () => {
+    cancelarInscricao();
+  };
+}, []);
 
   return (
     <section
