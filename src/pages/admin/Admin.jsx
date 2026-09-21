@@ -1623,6 +1623,179 @@ const atualizarProduto = async (event) => {
             )}
           </div>
 
+          {/* TAGS */}
+
+          <div
+            style={{
+              marginTop: "30px",
+            }}
+          >
+            <h3>
+              🏷️ Tags
+            </h3>
+
+            <p
+              style={{
+                margin: "0 0 15px",
+                color: "#777",
+                fontSize: "0.9rem",
+              }}
+            >
+              Adicione etiquetas para organizar e destacar o produto.
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <input
+                type="text"
+                id="novaTag"
+                placeholder="Ex: Novidade"
+                style={{
+                  padding: "12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "10px",
+                  width: "200px",
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") {
+                    return;
+                  }
+
+                  event.preventDefault();
+
+                  const tag = event.target.value
+                    .trim()
+                    .toLowerCase();
+
+                  if (!tag) {
+                    return;
+                  }
+
+                  if (formulario.tags.includes(tag)) {
+                    event.target.value = "";
+                    return;
+                  }
+
+                  setFormulario((anterior) => ({
+                    ...anterior,
+                    tags: [
+                      ...anterior.tags,
+                      tag,
+                    ],
+                  }));
+
+                  event.target.value = "";
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  const input =
+                    document.getElementById(
+                      "novaTag"
+                    );
+
+                  const tag = input.value
+                    .trim()
+                    .toLowerCase();
+
+                  if (!tag) {
+                    return;
+                  }
+
+                  if (formulario.tags.includes(tag)) {
+                    input.value = "";
+                    return;
+                  }
+
+                  setFormulario((anterior) => ({
+                    ...anterior,
+                    tags: [
+                      ...anterior.tags,
+                      tag,
+                    ],
+                  }));
+
+                  input.value = "";
+                }}
+                style={{
+                  padding: "12px 18px",
+                  border: "none",
+                  borderRadius: "10px",
+                  background: "#222",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                Adicionar tag
+              </button>
+            </div>
+
+            {formulario.tags.length > 0 && (
+              <div
+                style={{
+                  marginTop: "18px",
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {formulario.tags.map((tag) => (
+                  <div
+                    key={tag}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "9px 12px",
+                      background: "#f7f5f3",
+                      borderRadius: "20px",
+                      border: "1px solid #e8e1dc",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      #{tag}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormulario((anterior) => ({
+                          ...anterior,
+                          tags: anterior.tags.filter(
+                            (item) => item !== tag
+                          ),
+                        }));
+                      }}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#a33",
+                        cursor: "pointer",
+                        fontSize: "1rem",
+                        lineHeight: 1,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* OPÇÕES */}
 
           <div
