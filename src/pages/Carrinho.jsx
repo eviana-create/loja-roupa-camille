@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebaseConfig";
+
 import { useCarrinho } from "../context/CarrinhoContext";
-import produtos from "../data/produtos";
 
 import "./Carrinho.css";
 
 function formatarPreco(valor) {
-  return `R$ ${valor.toFixed(2).replace(".", ",")}`;
+  return `R$ ${Number(valor).toFixed(2).replace(".", ",")}`;
 }
 
 function Carrinho() {
@@ -24,6 +30,66 @@ function Carrinho() {
   } = useCarrinho();
 
   const [coresAbertas, setCoresAbertas] = useState({});
+  const [produtosFirebase, setProdutosFirebase] =
+    useState({});
+
+  /*
+    IDs dos produtos que realmente estão no carrinho.
+
+    Usamos uma string para que o useEffect só faça
+    uma nova busca quando os produtos do carrinho
+    mudarem, e não a cada alteração de quantidade.
+  */
+  const idsDosProdutos = [
+    ...new Set(
+      itens.map((item) => item.produtoId)
+    ),
+  ].join("|");
+
+  /*
+    Busca no Firebase somente os produtos que
+    estão presentes no carrinho.
+  */
+  useEffect(() => {
+    async function carregarProdutos() {
+      if (!idsDosProdutos) {
+        setProdutosFirebase({});
+        return;
+      }
+
+      try {
+        const snapshot = await getDocs(
+          collection(db, "produtos")
+        );
+
+        const produtos = {};
+
+        snapshot.docs.forEach((documento) => {
+          const produto = {
+            id: documento.id,
+            ...documento.data(),
+          };
+
+          if (
+            idsDosProdutos
+              .split("|")
+              .includes(produto.id)
+          ) {
+            produtos[produto.id] = produto;
+          }
+        });
+
+        setProdutosFirebase(produtos);
+      } catch (error) {
+        console.error(
+          "Erro ao carregar produtos do carrinho:",
+          error
+        );
+      }
+    }
+
+    carregarProdutos();
+  }, [idsDosProdutos]);
 
   const alternarCores = (itemId) => {
     setCoresAbertas((estadoAtual) => ({
@@ -33,10 +99,8 @@ function Carrinho() {
   };
 
   const adicionarOutraCor = (item, cor) => {
-    const produto = produtos.find(
-      (produtoAtual) =>
-        produtoAtual.id === item.produtoId
-    );
+    const produto =
+      produtosFirebase[item.produtoId];
 
     if (!produto) {
       alert("Produto não encontrado.");
@@ -91,9 +155,7 @@ function Carrinho() {
 
   return (
     <main className="carrinho-page">
-
       <div className="carrinho-header">
-
         <div>
           <span className="carrinho-label">
             SEU CARRINHO
@@ -110,25 +172,21 @@ function Carrinho() {
         >
           Limpar carrinho
         </button>
-
       </div>
 
       <section className="carrinho-container">
-
         <div className="carrinho-itens">
-
           {itens.map((item) => {
-
             const totalItem =
               item.preco * item.quantidade;
 
-            const produto = produtos.find(
-              (produtoAtual) =>
-                produtoAtual.id === item.produtoId
-            );
+            const produto =
+              produtosFirebase[item.produtoId];
 
             const coresDisponiveis =
-              produto?.cores || [];
+              Array.isArray(produto?.cores)
+                ? produto.cores
+                : [];
 
             const outrasCores =
               coresDisponiveis.filter(
@@ -143,22 +201,14 @@ function Carrinho() {
                 className="carrinho-item"
                 key={item.id}
               >
-
-                {/* IMAGEM */}
-
                 <div className="carrinho-item-imagem">
-
                   <img
                     src={item.imagem}
                     alt={item.nome}
                   />
-
                 </div>
 
-                {/* INFORMAÇÕES */}
-
                 <div className="carrinho-item-info">
-
                   <span className="carrinho-item-categoria">
                     Produto
                   </span>
@@ -167,10 +217,7 @@ function Carrinho() {
                     {item.nome}
                   </h2>
 
-                  {/* DETALHES */}
-
                   <div className="carrinho-item-detalhes">
-
                     <span>
                       Cor:{" "}
                       <strong>
@@ -184,15 +231,10 @@ function Carrinho() {
                         {item.tamanho}
                       </strong>
                     </span>
-
                   </div>
 
-                  {/* SELETOR DE COR */}
-
                   {outrasCores.length > 0 && (
-
                     <div className="carrinho-outra-cor">
-
                       <button
                         type="button"
                         className="outra-cor-toggle"
@@ -218,18 +260,14 @@ function Carrinho() {
                       </button>
 
                       {seletorAberto && (
-
                         <div className="outras-cores">
-
                           <span className="outras-cores-label">
                             Escolha outra cor
                           </span>
 
                           <div className="outras-cores-lista">
-
                             {outrasCores.map(
                               (cor) => (
-
                                 <button
                                   type="button"
                                   key={cor.nome}
@@ -241,7 +279,6 @@ function Carrinho() {
                                     )
                                   }
                                 >
-
                                   <span
                                     className="outra-cor-circulo"
                                     style={{
@@ -253,37 +290,26 @@ function Carrinho() {
                                   <span>
                                     {cor.nome}
                                   </span>
-
                                 </button>
-
                               )
                             )}
-
                           </div>
-
                         </div>
-
                       )}
-
                     </div>
-
                   )}
-
-                  {/* PREÇO */}
 
                   <span className="carrinho-item-preco">
                     {formatarPreco(item.preco)}
                   </span>
 
-                  {/* AÇÕES */}
-
                   <div className="carrinho-item-acoes">
-
                     <div className="carrinho-quantidade">
-
                       <button
                         onClick={() =>
-                          diminuirQuantidade(item.id)
+                          diminuirQuantidade(
+                            item.id
+                          )
                         }
                         aria-label="Diminuir quantidade"
                       >
@@ -296,13 +322,14 @@ function Carrinho() {
 
                       <button
                         onClick={() =>
-                          aumentarQuantidade(item.id)
+                          aumentarQuantidade(
+                            item.id
+                          )
                         }
                         aria-label="Aumentar quantidade"
                       >
                         +
                       </button>
-
                     </div>
 
                     <button
@@ -313,85 +340,65 @@ function Carrinho() {
                     >
                       Remover
                     </button>
-
                   </div>
-
                 </div>
-
-                {/* TOTAL DO ITEM */}
 
                 <div className="carrinho-item-total">
                   {formatarPreco(totalItem)}
                 </div>
-
               </article>
             );
           })}
-
         </div>
 
-        {/* RESUMO */}
-
         <aside className="carrinho-resumo">
-
           <span className="resumo-label">
             RESUMO DA COMPRA
           </span>
 
           <div className="resumo-linha">
-
-            <span>
-              Subtotal
-            </span>
+            <span>Subtotal</span>
 
             <strong>
               {formatarPreco(subtotal)}
             </strong>
-
           </div>
 
           <div className="resumo-linha">
-
-            <span>
-              Entrega
-            </span>
+            <span>Entrega</span>
 
             <span>
               Calculada no checkout
             </span>
-
           </div>
 
           <div className="resumo-total">
-
-            <span>
-              Total
-            </span>
+            <span>Total</span>
 
             <strong>
               {formatarPreco(subtotal)}
             </strong>
-
           </div>
 
           <button
             className="finalizar-compra"
-            onClick={() => navigate("/checkout")}
+            onClick={() =>
+              navigate("/checkout")
+            }
           >
             FINALIZAR COMPRA
           </button>
-          
+
           <button
             className="continuar-comprando"
-            onClick={() => navigate("/loja")}
+            onClick={() =>
+              navigate("/loja")
+            }
           >
             ← Continuar comprando
           </button>
-
         </aside>
-
       </section>
-
     </main>
   );
 }
