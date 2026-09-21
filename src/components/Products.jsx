@@ -1,12 +1,57 @@
-import produtos from "../data/produtos";
+import { useEffect, useState } from "react";
+
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebaseConfig";
+
 import ProductCard from "./ProductCard";
+
 import "./Products.css";
 
 function Products() {
-  const produtosDestaque = produtos.filter(
-    (produto) =>
-      produto.ativo && produto.destaque
-  );
+  const [produtos, setProdutos] = useState([]);
+  const [carregando, setCarregando] =
+    useState(true);
+
+  useEffect(() => {
+    async function carregarProdutos() {
+      try {
+        setCarregando(true);
+
+        const snapshot = await getDocs(
+          collection(db, "produtos")
+        );
+
+        const produtosFirebase =
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+        const produtosAtivos =
+          produtosFirebase.filter(
+            (produto) =>
+              produto.ativo !== false
+          );
+
+        setProdutos(produtosAtivos);
+      } catch (error) {
+        console.error(
+          "Erro ao carregar produtos:",
+          error
+        );
+
+        setProdutos([]);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarProdutos();
+  }, []);
 
   return (
     <section
@@ -14,15 +59,12 @@ function Products() {
       id="novidades"
     >
       <div className="products-header">
-
         <div>
           <span className="section-label">
             NOSSA SELEÇÃO
           </span>
 
-          <h2>
-            Novidades
-          </h2>
+          <h2>Novidades</h2>
         </div>
 
         <a
@@ -32,36 +74,69 @@ function Products() {
           Ver todos
           <span>→</span>
         </a>
-
       </div>
 
-      <div className="products-grid">
+      {carregando ? (
+        <div>
+          Carregando novidades...
+        </div>
+      ) : (
+        <div className="products-grid">
+          {produtos.map((produto) => {
+            const preco =
+              typeof produto.preco ===
+              "number"
+                ? produto.preco
+                : Number(produto.preco) || 0;
 
-        {produtosDestaque.map((produto) => (
-          <ProductCard
-            key={produto.id}
-            produto={{
-              ...produto,
+            const precoPromocional =
+              produto.precoPromocional !==
+                null &&
+              produto.precoPromocional !==
+                undefined
+                ? Number(
+                    produto.precoPromocional
+                  )
+                : null;
 
-              preco: produto.precoPromocional
-                ? `R$ ${produto.precoPromocional
-                    .toFixed(2)
-                    .replace(".", ",")}`
-                : `R$ ${produto.preco
-                    .toFixed(2)
-                    .replace(".", ",")}`,
+            return (
+              <ProductCard
+                key={produto.id}
+                produto={{
+                  ...produto,
 
-              precoAntigo:
-                produto.precoPromocional
-                  ? `R$ ${produto.preco
-                      .toFixed(2)
-                      .replace(".", ",")}`
-                  : null,
-            }}
-          />
-        ))}
+                  preco:
+                    precoPromocional !==
+                    null
+                      ? `R$ ${precoPromocional
+                          .toFixed(2)
+                          .replace(
+                            ".",
+                            ","
+                          )}`
+                      : `R$ ${preco
+                          .toFixed(2)
+                          .replace(
+                            ".",
+                            ","
+                          )}`,
 
-      </div>
+                  precoAntigo:
+                    precoPromocional !==
+                    null
+                      ? `R$ ${preco
+                          .toFixed(2)
+                          .replace(
+                            ".",
+                            ","
+                          )}`
+                      : null,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
