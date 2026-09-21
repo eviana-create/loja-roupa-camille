@@ -193,7 +193,9 @@ const editarProduto = (produto) => {
     cores: produto.cores || [],
     tags: Array.isArray(produto.tags)
       ? produto.tags
-      : [],
+      : produto.tags
+        ? [produto.tags]
+        : [],
     destaque: produto.destaque || false,
     oferta: produto.oferta || false,
     ativo: produto.ativo !== false,
@@ -1683,10 +1685,7 @@ const atualizarProduto = async (event) => {
 
                   setFormulario((anterior) => ({
                     ...anterior,
-                    tags: [
-                      ...anterior.tags,
-                      tag,
-                    ],
+                    tags: [tag],
                   }));
 
                   event.target.value = "";
@@ -1716,10 +1715,7 @@ const atualizarProduto = async (event) => {
 
                   setFormulario((anterior) => ({
                     ...anterior,
-                    tags: [
-                      ...anterior.tags,
-                      tag,
-                    ],
+                    tags: [tag],
                   }));
 
                   input.value = "";
