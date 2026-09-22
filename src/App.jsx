@@ -5,6 +5,9 @@ import {
   useLocation,
 } from "react-router-dom";
 
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminGuard from "./pages/admin/AdminGuard";
+
 import { useEffect } from "react";
 
 import Header from "./components/Header";
@@ -25,7 +28,6 @@ import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
 
 import PedidoConfirmado from "./pages/PedidoConfirmado";
-import Admin from "./pages/admin/Admin";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -127,9 +129,13 @@ function App() {
           />
 
           <Route
+            path="/login-admin"
+            element={<AdminLogin />}
+          />
+
+          <Route
             path="/admin"
-            element={<Admin />    
-            }
+            element={<AdminGuard />}
           />
 
         </Routes>
