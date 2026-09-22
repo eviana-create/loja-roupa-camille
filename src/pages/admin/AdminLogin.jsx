@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   signInWithEmailAndPassword,
+  setPersistence,
+  browserSessionPersistence,
 } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
 import "./AdminLogin.css";
@@ -32,6 +34,11 @@ function AdminLogin() {
     setEntrando(true);
 
     try {
+      await setPersistence(
+        auth,
+        browserSessionPersistence
+      );
+
       await signInWithEmailAndPassword(
         auth,
         email.trim(),
@@ -41,12 +48,12 @@ function AdminLogin() {
       navigate("/admin");
     } catch (error) {
       console.error(
-        "Erro ao entrar no painel:",
+        "Erro ao entrar:",
         error
       );
 
       setErro(
-        "E-mail ou senha inválidos."
+        "Não foi possível entrar. Verifique o e-mail e a senha."
       );
     } finally {
       setEntrando(false);
@@ -88,7 +95,7 @@ function AdminLogin() {
               onChange={(event) =>
                 setEmail(event.target.value)
               }
-              placeholder="seuemail@exemplo.com"
+              placeholder="Seu e-mail"
               autoComplete="email"
             />
           </div>
@@ -104,7 +111,7 @@ function AdminLogin() {
               onChange={(event) =>
                 setSenha(event.target.value)
               }
-              placeholder="Digite sua senha"
+              placeholder="Sua senha"
               autoComplete="current-password"
             />
           </div>
