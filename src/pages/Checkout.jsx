@@ -1,5 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebaseConfig";
 
 import { useCarrinho } from "../context/CarrinhoContext";
 
@@ -134,57 +141,116 @@ function Checkout() {
     }
   };
 
-  const finalizarPedido = (e) => {
-    e.preventDefault();
+  const finalizarPedido = async (e) => {
+  e.preventDefault();
 
-    if (itens.length === 0) {
-      alert("Seu carrinho está vazio.");
-      navigate("/loja");
+  if (itens.length === 0) {
+    alert("Seu carrinho está vazio.");
+    navigate("/loja");
+    return;
+  }
+
+  if (!dados.nome.trim()) {
+    alert("Informe seu nome.");
+    return;
+  }
+
+  if (!dados.whatsapp.trim()) {
+    alert("Informe seu WhatsApp.");
+    return;
+  }
+
+  if (formaEntrega === "entrega") {
+    if (
+      !dados.cep.trim() ||
+      !dados.rua.trim() ||
+      !dados.numero.trim() ||
+      !dados.bairro.trim() ||
+      !dados.cidade.trim() ||
+      !dados.estado.trim()
+    ) {
+      alert("Preencha todos os dados de entrega.");
       return;
     }
+  }
 
-    if (!dados.nome.trim()) {
-      alert("Informe seu nome.");
-      return;
-    }
+  try {
+    const numeroPedido = `DVF-${Math.floor(
+      1000 + Math.random() * 9000
+    )}`;
 
-    if (!dados.whatsapp.trim()) {
-      alert("Informe seu WhatsApp.");
-      return;
-    }
+    const pedido = {
+      numeroPedido,
 
-    if (formaEntrega === "entrega") {
-      if (
-        !dados.cep.trim() ||
-        !dados.rua.trim() ||
-        !dados.numero.trim() ||
-        !dados.bairro.trim() ||
-        !dados.cidade.trim() ||
-        !dados.estado.trim()
-      ) {
-        alert(
-          "Preencha todos os dados de entrega."
-        );
-        return;
-      }
-    }
+      cliente: {
+        nome: dados.nome.trim(),
+        whatsapp: dados.whatsapp.trim(),
+        email: dados.email.trim(),
+      },
 
-    const numeroPedido =
-        `DVF-${Math.floor(1000 + Math.random() * 9000)}`;
+      entrega: {
+        forma: formaEntrega,
+        cep: dados.cep,
+        rua: dados.rua,
+        numero: dados.numero,
+        complemento: dados.complemento,
+        bairro: dados.bairro,
+        cidade: dados.cidade,
+        estado: dados.estado,
+      },
 
-      navigate("/pedido-confirmado", {
-        state: {
-          numeroPedido,
-          itens,
-          subtotal,
-          formaEntrega,
-          pagamento,
-          dados,
-        },
-      });
+      pagamento,
 
-      limparCarrinho();
-  };
+      itens: itens.map((item) => ({
+        id: item.id,
+        produtoId: item.produtoId,
+        nome: item.nome,
+        imagem: item.imagem,
+        tamanho: item.tamanho,
+        cor: item.cor,
+        quantidade: item.quantidade,
+        preco: item.preco,
+        subtotal:
+          item.preco * item.quantidade,
+      })),
+
+      subtotal,
+
+      total: subtotal,
+
+      status: "aguardando_pagamento",
+
+      criadoEm: serverTimestamp(),
+    };
+
+    await addDoc(
+      collection(db, "pedidos"),
+      pedido
+    );
+
+    navigate("/pedido-confirmado", {
+      state: {
+        numeroPedido,
+        itens,
+        subtotal,
+        formaEntrega,
+        pagamento,
+        dados,
+      },
+    });
+
+    limparCarrinho();
+  } catch (erro) {
+    console.error(
+      "Erro ao salvar pedido:",
+      erro
+    );
+
+    alert(
+      "Não foi possível registrar seu pedido. Tente novamente."
+    );
+  }
+};
 
   if (itens.length === 0) {
     return (
