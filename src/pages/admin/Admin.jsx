@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { signOut } from "firebase/auth";
 import {
   collection,
   addDoc,
@@ -8,7 +9,7 @@ import {
   doc,
   runTransaction,
 } from "firebase/firestore";
-import { db } from "../../firebase/firebaseConfig";
+import { db, auth } from "../../firebase/firebaseConfig";
 import "./Admin.css";
 
 const CLOUD_NAME = "xs7pnfwj";
@@ -1264,6 +1265,24 @@ const produtosEstoqueBaixo =
       quantidade <= 3;
   }).length;
 
+const sairDoAdmin = async () => {
+  try {
+    await signOut(auth);
+
+    window.location.href =
+      "/login-admin";
+  } catch (error) {
+    console.error(
+      "Erro ao sair do painel:",
+      error
+    );
+
+    alert(
+      "Não foi possível sair do painel. Tente novamente."
+    );
+  }
+};
+
   return (
     <main className="admin">
 
@@ -1282,14 +1301,41 @@ const produtosEstoqueBaixo =
           </p>
         </div>
 
-        <button
-          className="admin-voltar"
-          onClick={() => {
-            window.location.href = "/loja";
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            flexWrap: "wrap",
           }}
         >
-          Voltar para a loja
-        </button>
+          <button
+            className="admin-voltar"
+            type="button"
+            onClick={() => {
+              window.location.href =
+                "/loja";
+            }}
+          >
+            Voltar para a loja
+          </button>
+
+          <button
+            type="button"
+            onClick={sairDoAdmin}
+            style={{
+              minHeight: "44px",
+              padding: "0 16px",
+              border: "1px solid #e8e1dc",
+              borderRadius: "10px",
+              background: "#fcebea",
+              color: "#a33",
+              fontWeight: "700",
+              cursor: "pointer",
+            }}
+          >
+            Sair
+          </button>
+        </div>
       </header>
 
       {/* CARDS DO PAINEL */}
