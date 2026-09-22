@@ -6,6 +6,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import "./Admin.css";
@@ -331,6 +332,164 @@ const obterProximoStatus = (pedido) => {
   return null;
 };
 
+const confirmarPagamentoEBaixarEstoque = async (
+  pedido
+) => {
+  const pedidoRef = doc(
+    db,
+    "pedidos",
+    pedido.id
+  );
+
+  const baixasPorProduto = {};
+
+  const itens = Array.isArray(pedido.itens)
+    ? pedido.itens
+    : [];
+
+  for (const item of itens) {
+    const produtoId = item.produtoId;
+    const tamanho = item.tamanho;
+    const quantidade = Number(
+      item.quantidade || 0
+    );
+
+    if (
+      !produtoId ||
+      !tamanho ||
+      quantidade <= 0
+    ) {
+      throw new Error(
+        "Existe um item do pedido com dados de estoque inválidos."
+      );
+    }
+
+    if (!baixasPorProduto[produtoId]) {
+      baixasPorProduto[produtoId] = {};
+    }
+
+    baixasPorProduto[produtoId][tamanho] =
+      (baixasPorProduto[produtoId][tamanho] ||
+        0) + quantidade;
+  }
+
+  await runTransaction(
+    db,
+    async (transaction) => {
+      const pedidoSnapshot =
+        await transaction.get(
+          pedidoRef
+        );
+
+      if (!pedidoSnapshot.exists()) {
+        throw new Error(
+          "Pedido não encontrado no Firebase."
+        );
+      }
+
+      const pedidoAtual =
+        pedidoSnapshot.data();
+
+      if (
+        pedidoAtual.status !==
+        "aguardando_pagamento"
+      ) {
+        throw new Error(
+          "Este pedido não está aguardando pagamento."
+        );
+      }
+
+      if (
+        pedidoAtual.estoqueBaixado === true
+      ) {
+        throw new Error(
+          "O estoque deste pedido já foi baixado."
+        );
+      }
+
+      const produtosAtualizados = [];
+
+      for (const produtoId of Object.keys(
+        baixasPorProduto
+      )) {
+        const produtoRef = doc(
+          db,
+          "produtos",
+          produtoId
+        );
+
+        const produtoSnapshot =
+          await transaction.get(
+            produtoRef
+          );
+
+        if (!produtoSnapshot.exists()) {
+          throw new Error(
+            `Produto ${produtoId} não foi encontrado.`
+          );
+        }
+
+        const produto =
+          produtoSnapshot.data();
+
+        const estoqueAtual = {
+          ...(produto.estoque || {}),
+        };
+
+        const baixas =
+          baixasPorProduto[produtoId];
+
+        for (const tamanho of Object.keys(
+          baixas
+        )) {
+          const quantidadeAtual =
+            Number(
+              estoqueAtual[tamanho] || 0
+            );
+
+          const quantidadeBaixar =
+            Number(baixas[tamanho] || 0);
+
+          if (
+            quantidadeAtual <
+            quantidadeBaixar
+          ) {
+            throw new Error(
+              `Estoque insuficiente para "${produto.nome}" no tamanho ${tamanho}. Disponível: ${quantidadeAtual}.`
+            );
+          }
+
+          estoqueAtual[tamanho] =
+            quantidadeAtual -
+            quantidadeBaixar;
+        }
+
+        produtosAtualizados.push({
+          produtoId,
+          estoque: estoqueAtual,
+        });
+
+        transaction.update(
+          produtoRef,
+          {
+            estoque: estoqueAtual,
+          }
+        );
+      }
+
+      transaction.update(
+        pedidoRef,
+        {
+          status: "pagamento_aprovado",
+          estoqueBaixado: true,
+        }
+      );
+    }
+  );
+
+  return baixasPorProduto;
+};
+
 const alterarStatusPedido = async (
   pedido,
   novoStatus
@@ -358,23 +517,82 @@ const alterarStatusPedido = async (
   setErroPedidos("");
 
   try {
+  let baixasPorProduto = null;
+
+  if (
+    novoStatus ===
+    "pagamento_aprovado"
+  ) {
+    baixasPorProduto =
+      await confirmarPagamentoEBaixarEstoque(
+        pedido
+      );
+  } else {
     await updateDoc(
       doc(db, "pedidos", pedido.id),
       {
         status: novoStatus,
       }
     );
+  }
 
-    setPedidosAdmin((anterior) =>
-      anterior.map((item) =>
-        item.id === pedido.id
-          ? {
-              ...item,
-              status: novoStatus,
-            }
-          : item
-      )
-    );
+  setPedidosAdmin((anterior) =>
+  anterior.map((item) =>
+    item.id === pedido.id
+      ? {
+          ...item,
+          status: novoStatus,
+          estoqueBaixado:
+            novoStatus ===
+            "pagamento_aprovado"
+              ? true
+              : item.estoqueBaixado,
+        }
+      : item
+  )
+);
+
+if (
+  novoStatus ===
+    "pagamento_aprovado" &&
+  baixasPorProduto
+) {
+  setProdutosAdmin((anterior) =>
+    anterior.map((produto) => {
+      const baixas =
+        baixasPorProduto[
+          produto.id
+        ];
+
+      if (!baixas) {
+        return produto;
+      }
+
+      const novoEstoque = {
+        ...(produto.estoque || {}),
+      };
+
+      Object.entries(
+        baixas
+      ).forEach(
+        ([tamanho, quantidade]) => {
+          novoEstoque[tamanho] =
+            Number(
+              novoEstoque[tamanho] || 0
+            ) -
+            Number(
+              quantidade || 0
+            );
+        }
+      );
+
+      return {
+        ...produto,
+        estoque: novoEstoque,
+      };
+    })
+  );
+}
 
     setPedidoSelecionado((anterior) =>
       anterior?.id === pedido.id
@@ -422,6 +640,12 @@ const avancarStatusPedido = async (pedido) => {
 const editarProduto = (produto) => {
   setProdutoEditando(produto);
 
+  // Abre o formulário de edição
+  setMostrarProdutos(false);
+  setMostrarPedidos(false);
+  setMostrarDashboard(false);
+  setMostrarFormulario(true);
+
   setFormulario({
     nome: produto.nome || "",
     descricao: produto.descricao || "",
@@ -453,10 +677,13 @@ const editarProduto = (produto) => {
   setSucessoProduto("");
   setErroUpload("");
 
-  window.scrollTo({
-    top: document.body.scrollHeight,
-    behavior: "smooth",
-  });
+  // Leva até o formulário
+  setTimeout(() => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
+  }, 100);
 };
 
 const alternarStatusProduto = async (produto) => {
@@ -1333,6 +1560,97 @@ const produtosEstoqueBaixo =
                     .replace(".", ",")}
                 </span>
               )}
+
+              {/* ESTOQUE DO PRODUTO */}
+
+              <div
+                style={{
+                  marginTop: "18px",
+                  paddingTop: "15px",
+                  borderTop: "1px solid #eee",
+                }}
+              >
+                <span
+                  style={{
+                    display: "block",
+                    marginBottom: "10px",
+                    fontSize: "0.82rem",
+                    fontWeight: "700",
+                    color: "#555",
+                  }}
+                >
+                  📦 Estoque
+                </span>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                  }}
+                >
+                  {produto.tamanhos?.map((tamanho) => {
+                    const quantidade =
+                      Number(
+                        produto.estoque?.[tamanho] || 0
+                      );
+
+                    return (
+                      <span
+                        key={tamanho}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 9px",
+                          borderRadius: "8px",
+                          background:
+                            quantidade === 0
+                              ? "#fcebea"
+                              : quantidade <= 3
+                              ? "#fff4d6"
+                              : "#edf8ef",
+                          color:
+                            quantidade === 0
+                              ? "#a33"
+                              : quantidade <= 3
+                              ? "#8a6500"
+                              : "#286b35",
+                          fontSize: "0.78rem",
+                          fontWeight: "700",
+                        }}
+                      >
+                        {tamanho}
+
+                        <span>
+                          {quantidade === 0
+                            ? "Esgotado"
+                            : quantidade}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: "10px",
+                    color: "#777",
+                    fontSize: "0.78rem",
+                  }}
+                >
+                  Total em estoque:{" "}
+                  {Object.values(
+                    produto.estoque || {}
+                  ).reduce(
+                    (total, valor) =>
+                      total + Number(valor || 0),
+                    0
+                  )}{" "}
+                  unidades
+                </small>
+              </div>
 
               <div className="admin-produto-footer">
 
