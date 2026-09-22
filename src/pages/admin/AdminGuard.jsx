@@ -15,10 +15,10 @@ import {
 import Admin from "./Admin";
 
 const TEMPO_INATIVIDADE =
-  60 * 1000;
+  30 * 60 * 1000;
 
 const TEMPO_AVISO =
-  30 * 1000;
+  25 * 60 * 1000;
 
 function AdminGuard() {
   const [carregando, setCarregando] =
