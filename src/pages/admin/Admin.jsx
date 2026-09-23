@@ -565,8 +565,87 @@ const pedidosExibidos =
     ? pedidosHistorico
     : pedidosAtivos;
 
-const obterDataCancelamento = (pedido) => {
-  return pedido.canceladoEm?.toDate?.() || null;
+ const obterDataCancelamento = (pedido) => {
+  const valor = pedido?.canceladoEm;
+
+  if (!valor) {
+    return null;
+  }
+
+  // Timestamp do Firebase
+  if (
+    typeof valor.toDate === "function"
+  ) {
+    return valor.toDate();
+  }
+
+  // Date criado localmente pelo React
+  if (
+    valor instanceof Date
+  ) {
+    return valor;
+  }
+
+  // Caso o valor venha como texto
+  if (
+    typeof valor === "string"
+  ) {
+    const data = new Date(valor);
+
+    if (!Number.isNaN(data.getTime())) {
+      return data;
+    }
+  }
+
+  return null;
+};
+
+const formatarDataHistorico = (
+  timestamp
+) => {
+  let data = null;
+
+  if (!timestamp) {
+    return "Data não registrada";
+  }
+
+  // Timestamp do Firebase
+  if (
+    typeof timestamp.toDate === "function"
+  ) {
+    data = timestamp.toDate();
+  }
+
+  // Date normal
+  else if (
+    timestamp instanceof Date
+  ) {
+    data = timestamp;
+  }
+
+  // Texto
+  else if (
+    typeof timestamp === "string"
+  ) {
+    const dataConvertida =
+      new Date(timestamp);
+
+    if (
+      !Number.isNaN(
+        dataConvertida.getTime()
+      )
+    ) {
+      data = dataConvertida;
+    }
+  }
+
+  if (!data) {
+    return "Data não registrada";
+  }
+
+  return data.toLocaleDateString(
+    "pt-BR"
+  );
 };
 
 const obterDiasRestantesHistorico = (pedido) => {
@@ -614,19 +693,6 @@ const podeExcluirPermanentemente = (
   return dias === 0;
 };
 
-const formatarDataHistorico = (
-  timestamp
-) => {
-  const data = timestamp?.toDate?.();
-
-  if (!data) {
-    return "Data não registrada";
-  }
-
-  return data.toLocaleDateString(
-    "pt-BR"
-  );
-};
 
 const reativarPedido = async (pedido) => {
   if (
