@@ -6,14 +6,68 @@ import {
   getDocs,
   updateDoc,
   deleteDoc,
+  deleteField,
   doc,
   runTransaction,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/firebaseConfig";
 import "./Admin.css";
 
 const CLOUD_NAME = "xs7pnfwj";
 const UPLOAD_PRESET = "diva-vitoria-produtos";
+
+const PRAZO_HISTORICO_DIAS = 60;
+
+const historicoObterDataCancelamento = (pedido) => {
+  return pedido.canceladoEm?.toDate?.() || null;
+};
+
+const historicoDiasRestantes = (pedido) => {
+  const dataCancelamento =
+    historicoObterDataCancelamento(pedido);
+
+  if (!dataCancelamento) {
+    return null;
+  }
+
+  const dataExclusao = new Date(dataCancelamento);
+
+  dataExclusao.setDate(
+    dataExclusao.getDate() + PRAZO_HISTORICO_DIAS
+  );
+
+  const diferenca =
+    dataExclusao.getTime() - new Date().getTime();
+
+  return Math.max(
+    0,
+    Math.ceil(
+      diferenca / (1000 * 60 * 60 * 24)
+    )
+  );
+};
+
+const historicoPodeExcluir = (pedido) => {
+  if (pedido.status !== "cancelado") {
+    return false;
+  }
+
+  const diasRestantes =
+    historicoDiasRestantes(pedido);
+
+  return diasRestantes === 0;
+};
+
+const historicoFormatarData = (timestamp) => {
+  const data = timestamp?.toDate?.();
+
+  if (!data) {
+    return "Data não registrada";
+  }
+
+  return data.toLocaleDateString("pt-BR");
+};
 
 function Admin() {
   const [imagemTeste, setImagemTeste] = useState("");
@@ -45,6 +99,8 @@ const [erroPedidos, setErroPedidos] =
 
 const [pedidoSelecionado, setPedidoSelecionado] =
   useState(null);
+
+const [filtroPedidos, setFiltroPedidos] = useState("ativos");
   
   const dashboardRef = useRef(null);
   const [sucessoProduto, setSucessoProduto] = useState("");
@@ -518,90 +574,180 @@ const alterarStatusPedido = async (
   setErroPedidos("");
 
   try {
-  let baixasPorProduto = null;
+    let baixasPorProduto = null;
 
-  if (
-    novoStatus ===
-    "pagamento_aprovado"
-  ) {
-    baixasPorProduto =
-      await confirmarPagamentoEBaixarEstoque(
-        pedido
+    /*
+     * CONFIRMAÇÃO DO PAGAMENTO
+     */
+    if (
+      novoStatus ===
+      "pagamento_aprovado"
+    ) {
+      baixasPorProduto =
+        await confirmarPagamentoEBaixarEstoque(
+          pedido
+        );
+    }
+
+    /*
+     * CANCELAMENTO
+     *
+     * O pedido não é apagado.
+     * Ele permanece no Firebase e entra
+     * no histórico.
+     */
+    else if (
+      novoStatus === "cancelado"
+    ) {
+      await updateDoc(
+        doc(
+          db,
+          "pedidos",
+          pedido.id
+        ),
+        {
+          status: "cancelado",
+          arquivado: true,
+          canceladoEm:
+            serverTimestamp(),
+        }
       );
-  } else {
-    await updateDoc(
-      doc(db, "pedidos", pedido.id),
-      {
-        status: novoStatus,
-      }
-    );
-  }
+    }
 
-  setPedidosAdmin((anterior) =>
-  anterior.map((item) =>
-    item.id === pedido.id
-      ? {
-          ...item,
+    /*
+     * OUTROS STATUS
+     */
+    else {
+      await updateDoc(
+        doc(
+          db,
+          "pedidos",
+          pedido.id
+        ),
+        {
           status: novoStatus,
-          estoqueBaixado:
-            novoStatus ===
-            "pagamento_aprovado"
-              ? true
-              : item.estoqueBaixado,
-        }
-      : item
-  )
-);
-
-if (
-  novoStatus ===
-    "pagamento_aprovado" &&
-  baixasPorProduto
-) {
-  setProdutosAdmin((anterior) =>
-    anterior.map((produto) => {
-      const baixas =
-        baixasPorProduto[
-          produto.id
-        ];
-
-      if (!baixas) {
-        return produto;
-      }
-
-      const novoEstoque = {
-        ...(produto.estoque || {}),
-      };
-
-      Object.entries(
-        baixas
-      ).forEach(
-        ([tamanho, quantidade]) => {
-          novoEstoque[tamanho] =
-            Number(
-              novoEstoque[tamanho] || 0
-            ) -
-            Number(
-              quantidade || 0
-            );
         }
       );
+    }
 
-      return {
-        ...produto,
-        estoque: novoEstoque,
-      };
-    })
-  );
-}
-
-    setPedidoSelecionado((anterior) =>
-      anterior?.id === pedido.id
-        ? {
-            ...anterior,
-            status: novoStatus,
+    /*
+     * ATUALIZA O ESTADO DOS PEDIDOS
+     */
+    setPedidosAdmin(
+      (anterior) =>
+        anterior.map((item) => {
+          if (
+            item.id !== pedido.id
+          ) {
+            return item;
           }
-        : anterior
+
+          return {
+            ...item,
+            status: novoStatus,
+
+            arquivado:
+              novoStatus ===
+              "cancelado"
+                ? true
+                : item.arquivado,
+
+            canceladoEm:
+              novoStatus ===
+              "cancelado"
+                ? new Date()
+                : item.canceladoEm,
+
+            estoqueBaixado:
+              novoStatus ===
+              "pagamento_aprovado"
+                ? true
+                : item.estoqueBaixado,
+          };
+        })
+    );
+
+    /*
+     * ATUALIZA O ESTOQUE LOCAL
+     * APÓS CONFIRMAR O PAGAMENTO
+     */
+    if (
+      novoStatus ===
+        "pagamento_aprovado" &&
+      baixasPorProduto
+    ) {
+      setProdutosAdmin(
+        (anterior) =>
+          anterior.map(
+            (produto) => {
+              const baixas =
+                baixasPorProduto[
+                  produto.id
+                ];
+
+              if (!baixas) {
+                return produto;
+              }
+
+              const novoEstoque = {
+                ...(produto.estoque ||
+                  {}),
+              };
+
+              Object.entries(
+                baixas
+              ).forEach(
+                ([
+                  tamanho,
+                  quantidade,
+                ]) => {
+                  novoEstoque[
+                    tamanho
+                  ] =
+                    Number(
+                      novoEstoque[
+                        tamanho
+                      ] || 0
+                    ) -
+                    Number(
+                      quantidade || 0
+                    );
+                }
+              );
+
+              return {
+                ...produto,
+                estoque:
+                  novoEstoque,
+              };
+            }
+          )
+      );
+    }
+
+    /*
+     * ATUALIZA O PEDIDO SELECIONADO
+     */
+    setPedidoSelecionado(
+      (anterior) =>
+        anterior?.id === pedido.id
+          ? {
+              ...anterior,
+              status: novoStatus,
+
+              arquivado:
+                novoStatus ===
+                "cancelado"
+                  ? true
+                  : anterior.arquivado,
+
+              canceladoEm:
+                novoStatus ===
+                "cancelado"
+                  ? new Date()
+                  : anterior.canceladoEm,
+            }
+          : anterior
     );
 
     console.log(
@@ -609,6 +755,16 @@ if (
       pedido.numeroPedido,
       novoStatus
     );
+
+    if (
+      novoStatus ===
+      "cancelado"
+    ) {
+      console.log(
+        "Pedido enviado para o histórico:",
+        pedido.numeroPedido
+      );
+    }
   } catch (error) {
     console.error(
       "Erro ao atualizar status do pedido:",
