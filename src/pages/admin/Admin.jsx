@@ -101,6 +101,7 @@ const [pedidoSelecionado, setPedidoSelecionado] =
   useState(null);
 
 const [filtroPedidos, setFiltroPedidos] = useState("ativos");
+const PRAZO_HISTORICO_DIAS = 60;
   
   const dashboardRef = useRef(null);
   const [sucessoProduto, setSucessoProduto] = useState("");
@@ -547,6 +548,274 @@ const confirmarPagamentoEBaixarEstoque = async (
   return baixasPorProduto;
 };
 
+const pedidosAtivos = pedidosAdmin.filter(
+  (pedido) =>
+    pedido.status !== "cancelado" &&
+    pedido.arquivado !== true
+);
+
+const pedidosHistorico = pedidosAdmin.filter(
+  (pedido) =>
+    pedido.status === "cancelado" ||
+    pedido.arquivado === true
+);
+
+const pedidosExibidos =
+  filtroPedidos === "historico"
+    ? pedidosHistorico
+    : pedidosAtivos;
+
+const obterDataCancelamento = (pedido) => {
+  return pedido.canceladoEm?.toDate?.() || null;
+};
+
+const obterDiasRestantesHistorico = (pedido) => {
+  const dataCancelamento =
+    obterDataCancelamento(pedido);
+
+  if (!dataCancelamento) {
+    return null;
+  }
+
+  const dataLimite = new Date(
+    dataCancelamento
+  );
+
+  dataLimite.setDate(
+    dataLimite.getDate() +
+      PRAZO_HISTORICO_DIAS
+  );
+
+  const diferenca =
+    dataLimite.getTime() -
+    new Date().getTime();
+
+  return Math.max(
+    0,
+    Math.ceil(
+      diferenca /
+        (1000 * 60 * 60 * 24)
+    )
+  );
+};
+
+const podeExcluirPermanentemente = (
+  pedido
+) => {
+  if (pedido.status !== "cancelado") {
+    return false;
+  }
+
+  const dias =
+    obterDiasRestantesHistorico(
+      pedido
+    );
+
+  return dias === 0;
+};
+
+const formatarDataHistorico = (
+  timestamp
+) => {
+  const data = timestamp?.toDate?.();
+
+  if (!data) {
+    return "Data não registrada";
+  }
+
+  return data.toLocaleDateString(
+    "pt-BR"
+  );
+};
+
+const reativarPedido = async (pedido) => {
+  if (
+    !pedido ||
+    pedido.status !== "cancelado"
+  ) {
+    return;
+  }
+
+  const confirmar = window.confirm(
+    `Deseja reativar o pedido #${
+      pedido.numeroPedido || pedido.id
+    }?`
+  );
+
+  if (!confirmar) {
+    return;
+  }
+
+  setProcessandoPedido(pedido.id);
+  setErroPedidos("");
+
+  try {
+    const novoStatus =
+      pedido.statusAnterior &&
+      pedido.statusAnterior !==
+        "cancelado"
+        ? pedido.statusAnterior
+        : pedido.estoqueBaixado === true
+          ? "pagamento_aprovado"
+          : "aguardando_pagamento";
+
+    await updateDoc(
+      doc(
+        db,
+        "pedidos",
+        pedido.id
+      ),
+      {
+        status: novoStatus,
+        arquivado: false,
+        canceladoEm: null,
+        statusAnterior: null,
+      }
+    );
+
+    setPedidosAdmin(
+      (anterior) =>
+        anterior.map((item) =>
+          item.id === pedido.id
+            ? {
+                ...item,
+                status: novoStatus,
+                arquivado: false,
+                canceladoEm: null,
+                statusAnterior: null,
+              }
+            : item
+        )
+    );
+
+    setPedidoSelecionado(
+      (anterior) =>
+        anterior?.id === pedido.id
+          ? {
+              ...anterior,
+              status: novoStatus,
+              arquivado: false,
+              canceladoEm: null,
+              statusAnterior: null,
+            }
+          : anterior
+    );
+
+    setFiltroPedidos("ativos");
+
+    console.log(
+      "Pedido reativado:",
+      pedido.numeroPedido,
+      novoStatus
+    );
+  } catch (error) {
+    console.error(
+      "Erro ao reativar pedido:",
+      error
+    );
+
+    setErroPedidos(
+      error.message ||
+        "Não foi possível reativar o pedido."
+    );
+  } finally {
+    setProcessandoPedido("");
+  }
+};
+
+const excluirPedidoPermanentemente = async (
+  pedido
+) => {
+  if (
+    !pedido ||
+    pedido.status !== "cancelado"
+  ) {
+    return;
+  }
+
+  if (
+    !podeExcluirPermanentemente(
+      pedido
+    )
+  ) {
+    const dias =
+      obterDiasRestantesHistorico(
+        pedido
+      );
+
+    alert(
+      `A exclusão permanente ainda não está disponível.${
+        dias !== null
+          ? ` Faltam ${dias} dia${
+              dias === 1
+                ? ""
+                : "s"
+            }.`
+          : ""
+      }`
+    );
+
+    return;
+  }
+
+  const confirmar =
+    window.confirm(
+      `EXCLUSÃO PERMANENTE\n\nDeseja excluir definitivamente o pedido #${
+        pedido.numeroPedido ||
+        pedido.id
+      }?\n\nEssa ação não poderá ser desfeita.`
+    );
+
+  if (!confirmar) {
+    return;
+  }
+
+  setProcessandoPedido(pedido.id);
+  setErroPedidos("");
+
+  try {
+    await deleteDoc(
+      doc(
+        db,
+        "pedidos",
+        pedido.id
+      )
+    );
+
+    setPedidosAdmin(
+      (anterior) =>
+        anterior.filter(
+          (item) =>
+            item.id !== pedido.id
+        )
+    );
+
+    if (
+      pedidoSelecionado?.id ===
+      pedido.id
+    ) {
+      setPedidoSelecionado(null);
+    }
+
+    console.log(
+      "Pedido excluído permanentemente:",
+      pedido.numeroPedido
+    );
+  } catch (error) {
+    console.error(
+      "Erro ao excluir pedido:",
+      error
+    );
+
+    setErroPedidos(
+      error.message ||
+        "Não foi possível excluir o pedido."
+    );
+  } finally {
+    setProcessandoPedido("");
+  }
+};
+
 const alterarStatusPedido = async (
   pedido,
   novoStatus
@@ -608,8 +877,8 @@ const alterarStatusPedido = async (
         {
           status: "cancelado",
           arquivado: true,
-          canceladoEm:
-            serverTimestamp(),
+          canceladoEm: serverTimestamp(),
+          statusAnterior: pedido.status,
         }
       );
     }
@@ -1991,6 +2260,44 @@ const sairDoAdmin = async () => {
         </p>
       </div>
 
+      <div className="admin-pedidos-abas">
+        <button
+          type="button"
+          className={
+            filtroPedidos === "ativos"
+              ? "admin-pedido-aba ativa"
+              : "admin-pedido-aba"
+          }
+          onClick={() => {
+            setFiltroPedidos("ativos");
+            setPedidoSelecionado(null);
+          }}
+        >
+          📦 Pedidos ativos
+          <span>
+            {pedidosAtivos.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={
+            filtroPedidos === "historico"
+              ? "admin-pedido-aba ativa"
+              : "admin-pedido-aba"
+          }
+          onClick={() => {
+            setFiltroPedidos("historico");
+            setPedidoSelecionado(null);
+          }}
+        >
+          🕘 Histórico
+          <span>
+            {pedidosHistorico.length}
+          </span>
+        </button>
+      </div>
+
       <button
         type="button"
         className="admin-produtos-atualizar"
@@ -2044,7 +2351,7 @@ const sairDoAdmin = async () => {
         }}
       >
 
-        {pedidosAdmin.map((pedido) => {
+        {pedidosExibidos.map((pedido) => {
 
           const dataPedido =
             pedido.criadoEm?.toDate
@@ -2396,8 +2703,87 @@ const sairDoAdmin = async () => {
                     </button>
                   )}
               </div>
+{pedido.status === "cancelado" && (
+            <div className="admin-pedido-historico">
+              <strong>
+                🕘 Pedido no histórico
+              </strong>
 
+              <p>
+                Cancelado em:{" "}
+                {formatarDataHistorico(
+                  pedido.canceladoEm
+                )}
+              </p>
+
+              {obterDiasRestantesHistorico(
+                pedido
+              ) === null ? (
+                <p>
+                  ⚠️ Data de cancelamento não
+                  registrada.
+                </p>
+              ) : obterDiasRestantesHistorico(
+                  pedido
+                ) > 0 ? (
+                <p>
+                  🔒 Exclusão disponível em{" "}
+                  <strong>
+                    {obterDiasRestantesHistorico(
+                      pedido
+                    )}
+                  </strong>{" "}
+                  dia
+                  {obterDiasRestantesHistorico(
+                    pedido
+                  ) === 1
+                    ? ""
+                    : "s"}.
+                </p>
+              ) : (
+                <p>
+                  🗑️ Exclusão permanente disponível.
+                </p>
+              )}
+
+              <div className="admin-pedido-historico-acoes">
+                <button
+                  type="button"
+                  onClick={() =>
+                    reativarPedido(pedido)
+                  }
+                  disabled={
+                    processandoPedido ===
+                    pedido.id
+                  }
+                >
+                  🔄 Reativar pedido
+                </button>
+
+                <button
+                  type="button"
+                  className="admin-pedido-excluir"
+                  onClick={() =>
+                    excluirPedidoPermanentemente(
+                      pedido
+                    )
+                  }
+                  disabled={
+                    processandoPedido ===
+                      pedido.id ||
+                    !podeExcluirPermanentemente(
+                      pedido
+                    )
+                  }
+                >
+                  🗑️ Excluir permanentemente
+                </button>
               </div>
+            </div>
+          )}
+              </div>
+
+              
 
             </article>
           );

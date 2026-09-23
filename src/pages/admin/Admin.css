@@ -453,4 +453,111 @@
     grid-column: auto;
   }
 }
+/* ========================================
+   PEDIDOS - ABAS E HISTÓRICO
+======================================== */
 
+.admin-pedidos-abas {
+  display: flex;
+  gap: 12px;
+  margin: 25px 0;
+  flex-wrap: wrap;
+}
+
+.admin-pedido-aba {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #555;
+  padding: 12px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-pedido-aba.ativa {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.admin-pedido-aba span {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #f1f1f1;
+  color: #333;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.admin-pedido-aba.ativa span {
+  background: #fff;
+  color: #111;
+}
+
+.admin-pedido-historico {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #faf4f4;
+  border: 1px solid #eadada;
+}
+
+.admin-pedido-historico p {
+  margin: 7px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.admin-pedido-historico-acoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.admin-pedido-historico-acoes button {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #333;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.admin-pedido-historico-acoes button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-pedido-historico-acoes
+.admin-pedido-excluir {
+  color: #a33;
+  border-color: #e0bcbc;
+}
+
+@media (max-width: 650px) {
+  .admin-pedidos-abas {
+    flex-direction: column;
+  }
+
+  .admin-pedido-aba {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-pedido-historico-acoes {
+    flex-direction: column;
+  }
+
+  .admin-pedido-historico-acoes button {
+    width: 100%;
+  }
+}
