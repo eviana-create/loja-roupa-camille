@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function usuarioLogado() {
+      return request.auth != null;
+    }
+
+    function administrador() {
+      return usuarioLogado()
+        && exists(
+          /databases/$(database)/documents/admins/$(request.auth.uid)
+        );
+    }
+
+    match /admins/{uid} {
+
+      allow read: if usuarioLogado()
+        && request.auth.uid == uid;
+
+      allow write: if false;
+    }
+
+    match /produtos/{produtoId} {
+
+      allow read: if true;
+
+      allow create, update, delete: if administrador();
+    }
+
+    match /pedidos/{pedidoId} {
+
+      allow create: if
+        request.resource.data.status ==
+          "aguardando_pagamento"
+
+        &&
+
+        request.resource.data.keys().hasOnly([
+          "numeroPedido",
+          "cliente",
+          "entrega",
+          "pagamento",
+          "itens",
+          "subtotal",
+          "total",
+          "status",
+          "criadoEm"
+        ])
+
+        &&
+
+        !request.resource.data.keys().hasAny([
+          "estoqueBaixado",
+          "arquivado",
+          "canceladoEm",
+          "statusAnterior"
+        ]);
+
+      allow read: if administrador();
+
+      allow update: if administrador();
+
+      allow delete: if
+        administrador()
+
+        &&
+
+        resource.data.status ==
+          "cancelado"
+
+        &&
+
+        resource.data.arquivado ==
+          true
+
+        &&
+
+        resource.data.canceladoEm
+          is timestamp
+
+        &&
+
+        request.time >=
+          resource.data.canceladoEm
+          + duration.value(60, "d");
+    }
+  }
+}
