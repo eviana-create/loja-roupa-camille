@@ -561,3 +561,574 @@
     width: 100%;
   }
 }
+/* =========================================
+   CENTRAL DE PEDIDOS - GERENCIAMENTO
+   ========================================= */
+
+.admin-pedidos-resumo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.admin-pedidos-resumo-card {
+  padding: 18px;
+  border: 1px solid #e8e1dc;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.admin-pedidos-resumo-card span {
+  display: block;
+  font-size: 0.82rem;
+  color: #777;
+  font-weight: 700;
+}
+
+.admin-pedidos-resumo-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.55rem;
+  line-height: 1.15;
+}
+
+.admin-pedidos-resumo-card small {
+  display: block;
+  margin-top: 7px;
+  color: #999;
+  line-height: 1.4;
+}
+
+.admin-pedidos-filtros {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 220px auto;
+  gap: 12px;
+  align-items: end;
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid #e8e1dc;
+  border-radius: 16px;
+  background: #fdfcfb;
+}
+
+.admin-pedidos-filtros label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 0.82rem;
+  color: #555;
+  font-weight: 700;
+}
+
+.admin-pedidos-filtros input,
+.admin-pedidos-filtros select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  outline: none;
+}
+
+.admin-pedidos-filtros input:focus,
+.admin-pedidos-filtros select:focus {
+  border-color: #999;
+}
+
+.admin-pedidos-limpar-filtros {
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.admin-pedidos-lista {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-pedido-card {
+  padding: 22px;
+  border: 1px solid #e8e1dc;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+}
+
+.admin-pedido-card-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.admin-pedido-mini-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #888;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.admin-pedido-card-topo h3 {
+  margin: 4px 0 3px;
+}
+
+.admin-pedido-card-topo small {
+  color: #999;
+  font-size: 0.82rem;
+}
+
+.admin-pedido-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-pedido-card-dados {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.admin-pedido-card-dados div span,
+.admin-pedido-card-total span,
+.admin-pedido-atendimento > div:first-child > span,
+.admin-pedido-detalhe-cabecalho > div > span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.76rem;
+  color: #888;
+  font-weight: 700;
+}
+
+.admin-pedido-card-dados strong {
+  display: block;
+  word-break: break-word;
+}
+
+.admin-pedido-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f7f5f3;
+}
+
+.admin-pedido-preview-item img,
+.admin-pedido-preview-sem-imagem {
+  width: 58px;
+  height: 70px;
+  flex: 0 0 58px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.admin-pedido-preview-sem-imagem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eee;
+  font-size: 1.3rem;
+}
+
+.admin-pedido-preview-item div:not(.admin-pedido-preview-sem-imagem) {
+  min-width: 0;
+}
+
+.admin-pedido-preview-item strong {
+  display: block;
+}
+
+.admin-pedido-preview-item span,
+.admin-pedido-preview-item small {
+  display: block;
+  margin-top: 4px;
+  color: #777;
+  line-height: 1.4;
+}
+
+.admin-pedido-preview-item small {
+  color: #999;
+}
+
+.admin-pedido-card-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 15px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.admin-pedido-card-total > div strong {
+  display: block;
+  font-size: 1.28rem;
+}
+
+.admin-pedido-estoque {
+  font-size: 0.78rem;
+  color: #777;
+  text-align: right;
+}
+
+.admin-pedido-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.admin-pedido-acoes button,
+.admin-pedido-atendimento-acoes button,
+.admin-pedido-copiar-endereco {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.admin-pedido-acoes button:disabled,
+.admin-pedido-atendimento-acoes button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-pedido-acoes .admin-pedido-acao-principal,
+.admin-pedido-atendimento-acoes .admin-pedido-acao-principal {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}
+
+.admin-pedido-acoes .admin-pedido-acao-cancelar,
+.admin-pedido-atendimento-acoes .admin-pedido-acao-cancelar {
+  background: #fcebea;
+  color: #a33;
+  border-color: #e0bcbc;
+}
+
+.admin-pedido-detalhe-cabecalho {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.admin-pedido-detalhe-cabecalho > div {
+  padding: 16px;
+  border: 1px solid #e8e1dc;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-pedido-detalhe-cabecalho > div > strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-pedido-andamento,
+.admin-pedido-atendimento,
+.admin-pedido-produtos-detalhe {
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid #e8e1dc;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.admin-pedido-andamento-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.admin-pedido-andamento-titulo h3 {
+  margin: 5px 0 0;
+}
+
+.admin-pedido-progresso {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.admin-pedido-etapa {
+  position: relative;
+  text-align: center;
+}
+
+.admin-pedido-etapa-ponto {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 8px;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #888;
+  font-weight: 800;
+}
+
+.admin-pedido-etapa.concluida .admin-pedido-etapa-ponto {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}
+
+.admin-pedido-etapa span {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: #999;
+}
+
+.admin-pedido-etapa.concluida span {
+  color: #333;
+  font-weight: 700;
+}
+
+.admin-pedido-cancelado-banner {
+  display: grid;
+  gap: 5px;
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #eadada;
+  background: #faf4f4;
+  color: #555;
+}
+
+.admin-pedido-cancelado-banner strong {
+  color: #a33;
+}
+
+.admin-pedido-atendimento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.admin-pedido-atendimento h3 {
+  margin: 5px 0 0;
+}
+
+.admin-pedido-atendimento-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-pedido-detalhe-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.admin-pedido-info-box {
+  padding: 20px;
+  border: 1px solid #e8e1dc;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.admin-pedido-info-box h3 {
+  margin-top: 0;
+}
+
+.admin-pedido-info-box p {
+  margin: 9px 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.admin-pedido-info-box strong {
+  color: #333;
+}
+
+.admin-pedido-itens-lista {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-pedido-item-detalhe {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.admin-pedido-item-detalhe img,
+.admin-pedido-item-sem-imagem {
+  width: 70px;
+  height: 84px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.admin-pedido-item-sem-imagem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f2f2;
+}
+
+.admin-pedido-item-conteudo {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-pedido-item-conteudo strong {
+  margin-bottom: 3px;
+}
+
+.admin-pedido-item-conteudo span {
+  color: #777;
+  font-size: 0.86rem;
+}
+
+.admin-pedido-item-subtotal {
+  white-space: nowrap;
+}
+
+.admin-pedido-totais {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 340px);
+  margin: 20px 0 0 auto;
+}
+
+.admin-pedido-totais > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.admin-pedido-total-final {
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+  font-size: 1.12rem;
+}
+
+@media (max-width: 900px) {
+  .admin-pedidos-filtros {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-pedidos-limpar-filtros {
+    grid-column: 1 / -1;
+  }
+
+  .admin-pedido-card-dados,
+  .admin-pedido-detalhe-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-pedido-detalhe-cabecalho {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-pedido-progresso {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .admin-pedido-etapa {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 10px;
+    align-items: center;
+    text-align: left;
+  }
+
+  .admin-pedido-etapa-ponto {
+    margin: 0;
+  }
+}
+
+@media (max-width: 650px) {
+  .admin-pedidos-resumo,
+  .admin-pedidos-filtros,
+  .admin-pedido-card-dados,
+  .admin-pedido-detalhe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-pedidos-limpar-filtros {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .admin-pedido-card-topo,
+  .admin-pedido-card-total,
+  .admin-pedido-atendimento {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-pedido-estoque {
+    text-align: left;
+  }
+
+  .admin-pedido-acoes,
+  .admin-pedido-atendimento-acoes {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .admin-pedido-acoes button,
+  .admin-pedido-atendimento-acoes button,
+  .admin-pedido-copiar-endereco {
+    width: 100%;
+  }
+
+  .admin-pedido-item-detalhe {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+
+  .admin-pedido-item-detalhe img,
+  .admin-pedido-item-sem-imagem {
+    width: 60px;
+    height: 72px;
+  }
+
+  .admin-pedido-item-subtotal {
+    grid-column: 2;
+  }
+}
+

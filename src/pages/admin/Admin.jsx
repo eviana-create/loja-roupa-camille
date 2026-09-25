@@ -101,8 +101,10 @@ const [pedidoSelecionado, setPedidoSelecionado] =
   useState(null);
 
 const [filtroPedidos, setFiltroPedidos] = useState("ativos");
+const [buscaPedidos, setBuscaPedidos] = useState("");
+const [filtroStatusPedido, setFiltroStatusPedido] = useState("todos");
 const PRAZO_HISTORICO_DIAS = 60;
-  
+
   const dashboardRef = useRef(null);
   const [sucessoProduto, setSucessoProduto] = useState("");
 
@@ -323,6 +325,8 @@ const abrirPedidos = async () => {
 
   setMostrarPedidos(true);
   setPedidoSelecionado(null);
+  setBuscaPedidos("");
+  setFiltroStatusPedido("todos");
 
   await carregarPedidos();
 };
@@ -565,7 +569,155 @@ const pedidosExibidos =
     ? pedidosHistorico
     : pedidosAtivos;
 
- const obterDataCancelamento = (pedido) => {
+const normalizarTextoPedido = (valor) =>
+  String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const converterDataPedido = (valor) => {
+  if (!valor) {
+    return null;
+  }
+
+  if (typeof valor.toDate === "function") {
+    return valor.toDate();
+  }
+
+  if (valor instanceof Date) {
+    return valor;
+  }
+
+  if (typeof valor === "string") {
+    const data = new Date(valor);
+
+    if (!Number.isNaN(data.getTime())) {
+      return data;
+    }
+  }
+
+  return null;
+};
+
+const formatarDataPedidoCompleta = (valor) => {
+  const data = converterDataPedido(valor);
+
+  if (!data) {
+    return "Data não disponível";
+  }
+
+  return data.toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+};
+
+const obterPagamentoLabel = (pagamento) => {
+  if (pagamento === "pix") {
+    return "Pix";
+  }
+
+  if (pagamento === "cartao") {
+    return "Cartão";
+  }
+
+  if (pagamento === "dinheiro") {
+    return "Dinheiro";
+  }
+
+  return pagamento || "Não informado";
+};
+
+const obterIndiceStatusPedido = (status) => {
+  const ordem = [
+    "aguardando_pagamento",
+    "pagamento_aprovado",
+    "preparando",
+    "enviado",
+    "entregue",
+  ];
+
+  return ordem.indexOf(status);
+};
+
+const pedidosFiltrados = pedidosExibidos.filter((pedido) => {
+  const termo = normalizarTextoPedido(
+    buscaPedidos.trim()
+  );
+
+  const correspondeBusca =
+    !termo ||
+    [
+      pedido.numeroPedido,
+      pedido.cliente?.nome,
+      pedido.cliente?.whatsapp,
+      pedido.cliente?.email,
+    ].some((valor) =>
+      normalizarTextoPedido(valor).includes(termo)
+    );
+
+  const correspondeStatus =
+    filtroStatusPedido === "todos" ||
+    pedido.status === filtroStatusPedido;
+
+  return correspondeBusca && correspondeStatus;
+});
+
+const copiarParaAreaDeTransferencia = async (texto) => {
+  if (!texto) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(texto);
+    setErroPedidos("");
+    alert("Informação copiada para a área de transferência.");
+  } catch (error) {
+    console.error("Erro ao copiar informação:", error);
+    setErroPedidos(
+      "Não foi possível copiar a informação. Tente novamente."
+    );
+  }
+};
+
+const abrirWhatsAppPedido = (pedido) => {
+  const numero = String(
+    pedido?.cliente?.whatsapp || ""
+  ).replace(/\D/g, "");
+
+  if (!numero) {
+    setErroPedidos(
+      "Este pedido não possui um WhatsApp cadastrado."
+    );
+    return;
+  }
+
+  window.open(
+    `https://wa.me/55${numero}`,
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
+
+const abrirEmailPedido = (pedido) => {
+  const email = String(
+    pedido?.cliente?.email || ""
+  ).trim();
+
+  if (!email) {
+    setErroPedidos(
+      "Este pedido não possui um e-mail cadastrado."
+    );
+    return;
+  }
+
+  window.location.href =
+    `mailto:${email}?subject=${encodeURIComponent(
+      `Pedido ${pedido.numeroPedido || pedido.id}`
+    )}`;
+};
+
+const obterDataCancelamento = (pedido) => {
   const valor = pedido?.canceladoEm;
 
   if (!valor) {
@@ -2318,50 +2470,12 @@ const sairDoAdmin = async () => {
         </span>
 
         <h2>
-          Pedidos recebidos
+          Central de pedidos
         </h2>
 
         <p>
-          Acompanhe os pedidos realizados na loja.
+          Consulte, acompanhe e gerencie cada pedido da loja em um só lugar.
         </p>
-      </div>
-
-      <div className="admin-pedidos-abas">
-        <button
-          type="button"
-          className={
-            filtroPedidos === "ativos"
-              ? "admin-pedido-aba ativa"
-              : "admin-pedido-aba"
-          }
-          onClick={() => {
-            setFiltroPedidos("ativos");
-            setPedidoSelecionado(null);
-          }}
-        >
-          📦 Pedidos ativos
-          <span>
-            {pedidosAtivos.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          className={
-            filtroPedidos === "historico"
-              ? "admin-pedido-aba ativa"
-              : "admin-pedido-aba"
-          }
-          onClick={() => {
-            setFiltroPedidos("historico");
-            setPedidoSelecionado(null);
-          }}
-        >
-          🕘 Histórico
-          <span>
-            {pedidosHistorico.length}
-          </span>
-        </button>
       </div>
 
       <button
@@ -2369,8 +2483,163 @@ const sairDoAdmin = async () => {
         className="admin-produtos-atualizar"
         onClick={abrirPedidos}
       >
-        Atualizar pedidos
+        ↻ Atualizar pedidos
       </button>
+
+    </div>
+
+    <div className="admin-pedidos-abas">
+
+      <button
+        type="button"
+        className={
+          filtroPedidos === "ativos"
+            ? "admin-pedido-aba ativa"
+            : "admin-pedido-aba"
+        }
+        onClick={() => {
+          setFiltroPedidos("ativos");
+          setFiltroStatusPedido("todos");
+          setPedidoSelecionado(null);
+        }}
+      >
+        📦 Pedidos ativos
+        <span>
+          {pedidosAtivos.length}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        className={
+          filtroPedidos === "historico"
+            ? "admin-pedido-aba ativa"
+            : "admin-pedido-aba"
+        }
+        onClick={() => {
+          setFiltroPedidos("historico");
+          setFiltroStatusPedido("todos");
+          setPedidoSelecionado(null);
+        }}
+      >
+        🕘 Histórico
+        <span>
+          {pedidosHistorico.length}
+        </span>
+      </button>
+
+    </div>
+
+    <div className="admin-pedidos-resumo">
+
+      <div className="admin-pedidos-resumo-card">
+        <span>📋 Exibidos</span>
+        <strong>{pedidosFiltrados.length}</strong>
+        <small>
+          de {pedidosExibidos.length} nesta aba
+        </small>
+      </div>
+
+      <div className="admin-pedidos-resumo-card">
+        <span>⚠️ Aguardando ação</span>
+        <strong>{pedidosAguardandoAcao.length}</strong>
+        <small>
+          pedidos que precisam de atendimento
+        </small>
+      </div>
+
+      <div className="admin-pedidos-resumo-card">
+        <span>💰 Valor exibido</span>
+        <strong>
+          R${" "}
+          {pedidosFiltrados
+            .reduce(
+              (total, pedido) =>
+                total + Number(pedido.total || 0),
+              0
+            )
+            .toFixed(2)
+            .replace(".", ",")}
+        </strong>
+        <small>
+          soma dos pedidos filtrados
+        </small>
+      </div>
+
+    </div>
+
+    <div className="admin-pedidos-filtros">
+
+      <div className="admin-pedidos-busca">
+        <label htmlFor="buscaPedidosAdmin">
+          Buscar pedido
+        </label>
+
+        <input
+          id="buscaPedidosAdmin"
+          type="search"
+          value={buscaPedidos}
+          onChange={(event) =>
+            setBuscaPedidos(event.target.value)
+          }
+          placeholder="Número, cliente, WhatsApp ou e-mail"
+        />
+      </div>
+
+      <div className="admin-pedidos-status-filtro">
+        <label htmlFor="filtroStatusPedidoAdmin">
+          Status
+        </label>
+
+        <select
+          id="filtroStatusPedidoAdmin"
+          value={filtroStatusPedido}
+          onChange={(event) =>
+            setFiltroStatusPedido(event.target.value)
+          }
+        >
+          <option value="todos">
+            Todos os status
+          </option>
+
+          {filtroPedidos === "ativos" ? (
+            <>
+              <option value="aguardando_pagamento">
+                Aguardando pagamento
+              </option>
+              <option value="pagamento_aprovado">
+                Pagamento aprovado
+              </option>
+              <option value="preparando">
+                Preparando
+              </option>
+              <option value="enviado">
+                Enviado
+              </option>
+              <option value="entregue">
+                Entregue
+              </option>
+            </>
+          ) : (
+            <option value="cancelado">
+              Cancelado
+            </option>
+          )}
+        </select>
+      </div>
+
+      {(buscaPedidos || filtroStatusPedido !== "todos") && (
+        <button
+          type="button"
+          className="admin-pedidos-limpar-filtros"
+          onClick={() => {
+            setBuscaPedidos("");
+            setFiltroStatusPedido("todos");
+          }}
+        >
+          Limpar filtros
+        </button>
+      )}
 
     </div>
 
@@ -2406,29 +2675,26 @@ const sairDoAdmin = async () => {
         Nenhum pedido recebido ainda.
       </div>
 
+    ) : pedidosFiltrados.length === 0 ? (
+
+      <div className="admin-produtos-vazio">
+        Nenhum pedido corresponde aos filtros atuais.
+      </div>
+
     ) : (
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "18px",
-        }}
-      >
+      <div className="admin-pedidos-lista">
 
-        {pedidosExibidos.map((pedido) => {
+        {pedidosFiltrados.map((pedido) => {
 
           const dataPedido =
-            pedido.criadoEm?.toDate
-              ? pedido.criadoEm
-                  .toDate()
-                  .toLocaleString("pt-BR")
-              : "Data não disponível";
+            formatarDataPedidoCompleta(
+              pedido.criadoEm
+            );
 
-              const statusAtual =
-                statusInfo[pedido.status] ||
-                statusInfo.aguardando_pagamento;
+          const statusAtual =
+            statusInfo[pedido.status] ||
+            statusInfo.aguardando_pagamento;
 
           const quantidadeItens =
             Array.isArray(pedido.itens)
@@ -2442,90 +2708,51 @@ const sairDoAdmin = async () => {
                 )
               : 0;
 
+          const primeiroItem =
+            Array.isArray(pedido.itens)
+              ? pedido.itens[0]
+              : null;
+
           return (
             <article
               key={pedido.id}
-              style={{
-                padding: "22px",
-                border:
-                  "1px solid #e8e1dc",
-                borderRadius: "18px",
-                background: "#fff",
-                boxShadow:
-                  "0 8px 25px rgba(0,0,0,0.04)",
-              }}
+              className="admin-pedido-card"
             >
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent:
-                    "space-between",
-                  alignItems: "flex-start",
-                  gap: "15px",
-                  marginBottom: "18px",
-                }}
-              >
+              <div className="admin-pedido-card-topo">
 
                 <div>
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "#888",
-                      fontWeight: "600",
-                    }}
-                  >
+                  <span className="admin-pedido-mini-label">
                     PEDIDO
                   </span>
 
-                  <h3
-                    style={{
-                      margin:
-                        "5px 0 0",
-                    }}
-                  >
-                    #{pedido.numeroPedido}
+                  <h3>
+                    #{pedido.numeroPedido || pedido.id}
                   </h3>
+
+                  <small>
+                    {dataPedido}
+                  </small>
                 </div>
 
                 <span
-                style={{
-                  padding: "7px 10px",
-                  borderRadius: "20px",
-                  background:
-                    statusAtual.background,
-                  color:
-                    statusAtual.color,
-                  fontSize: "0.75rem",
-                  fontWeight: "700",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {statusAtual.label}
-              </span>
+                  className="admin-pedido-status-badge"
+                  style={{
+                    background:
+                      statusAtual.background,
+                    color:
+                      statusAtual.color,
+                  }}
+                >
+                  {statusAtual.label}
+                </span>
 
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gap: "10px",
-                  marginBottom: "20px",
-                }}
-              >
+              <div className="admin-pedido-card-dados">
 
                 <div>
-                  <span
-                    style={{
-                      display: "block",
-                      fontSize:
-                        "0.78rem",
-                      color: "#888",
-                    }}
-                  >
-                    Cliente
-                  </span>
-
+                  <span>Cliente</span>
                   <strong>
                     {pedido.cliente?.nome ||
                       "Não informado"}
@@ -2533,53 +2760,24 @@ const sairDoAdmin = async () => {
                 </div>
 
                 <div>
-                  <span
-                    style={{
-                      display: "block",
-                      fontSize:
-                        "0.78rem",
-                      color: "#888",
-                    }}
-                  >
-                    WhatsApp
-                  </span>
-
+                  <span>WhatsApp</span>
                   <strong>
-                    {pedido.cliente
-                      ?.whatsapp ||
+                    {pedido.cliente?.whatsapp ||
                       "Não informado"}
                   </strong>
                 </div>
 
                 <div>
-                  <span
-                    style={{
-                      display: "block",
-                      fontSize:
-                        "0.78rem",
-                      color: "#888",
-                    }}
-                  >
-                    Pedido realizado
-                  </span>
-
+                  <span>Pagamento</span>
                   <strong>
-                    {dataPedido}
+                    {obterPagamentoLabel(
+                      pedido.pagamento
+                    )}
                   </strong>
                 </div>
 
                 <div>
-                  <span
-                    style={{
-                      display: "block",
-                      fontSize:
-                        "0.78rem",
-                      color: "#888",
-                    }}
-                  >
-                    Produtos
-                  </span>
-
+                  <span>Itens</span>
                   <strong>
                     {quantidadeItens}{" "}
                     {quantidadeItens === 1
@@ -2590,37 +2788,64 @@ const sairDoAdmin = async () => {
 
               </div>
 
-              <div
-                style={{
-                  borderTop:
-                    "1px solid #eee",
-                  paddingTop: "15px",
-                  display: "flex",
-                  justifyContent:
-                    "space-between",
-                  alignItems: "center",
-                  gap: "15px",
-                }}
-              >
+              {primeiroItem && (
+                <div className="admin-pedido-preview-item">
+
+                  {primeiroItem.imagem ? (
+                    <img
+                      src={primeiroItem.imagem}
+                      alt={primeiroItem.nome}
+                    />
+                  ) : (
+                    <div className="admin-pedido-preview-sem-imagem">
+                      🛍️
+                    </div>
+                  )}
+
+                  <div>
+                    <strong>
+                      {primeiroItem.nome ||
+                        "Produto"}
+                    </strong>
+
+                    <span>
+                      {primeiroItem.cor ||
+                        "Cor não informada"}{" "}
+                      ·{" "}
+                      {primeiroItem.tamanho ||
+                        "Tamanho não informado"}{" "}
+                      · Qtd.{" "}
+                      {primeiroItem.quantidade ||
+                        0}
+                    </span>
+
+                    {quantidadeItens > 1 && (
+                      <small>
+                        +{" "}
+                        {quantidadeItens - 1}{" "}
+                        outro
+                        {quantidadeItens - 1 === 1
+                          ? ""
+                          : "s"}{" "}
+                        item
+                        {quantidadeItens - 1 === 1
+                          ? ""
+                          : "s"}
+                      </small>
+                    )}
+                  </div>
+
+                </div>
+              )}
+
+              <div className="admin-pedido-card-total">
 
                 <div>
-                  <span
-                    style={{
-                      display: "block",
-                      fontSize:
-                        "0.78rem",
-                      color: "#888",
-                    }}
-                  >
-                    Total
+                  <span>
+                    Total do pedido
                   </span>
 
-                  <strong
-                    style={{
-                      fontSize:
-                        "1.2rem",
-                    }}
-                  >
+                  <strong>
                     R${" "}
                     {Number(
                       pedido.total || 0
@@ -2630,226 +2855,199 @@ const sairDoAdmin = async () => {
                   </strong>
                 </div>
 
-                <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                }}
-              >
+                <span className="admin-pedido-estoque">
+                  {pedido.estoqueBaixado === true
+                    ? "✓ Estoque baixado"
+                    : pedido.status ===
+                      "aguardando_pagamento"
+                    ? "⏳ Estoque baixado após confirmação"
+                    : "ℹ️ Estoque não baixado"}
+                </span>
+
+              </div>
+
+              <div className="admin-pedido-acoes">
+
+                <button
+                  type="button"
+                  className="admin-pedido-acao-principal"
+                  onClick={() =>
+                    setPedidoSelecionado(pedido)
+                  }
+                >
+                  👁️ Ver detalhes
+                </button>
+
                 <button
                   type="button"
                   onClick={() =>
-                    setPedidoSelecionado(
-                      pedido
-                    )
+                    abrirWhatsAppPedido(pedido)
                   }
-                  style={{
-                    border: "none",
-                    borderRadius: "10px",
-                    padding: "11px 15px",
-                    background: "#222",
-                    color: "white",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                  }}
+                  disabled={
+                    !pedido.cliente?.whatsapp
+                  }
                 >
-                  Ver pedido
+                  💬 WhatsApp
                 </button>
 
                 {pedido.status !== "entregue" &&
                   pedido.status !== "cancelado" && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      avancarStatusPedido(
+                        pedido
+                      )
+                    }
+                    disabled={
+                      processandoPedido ===
+                        pedido.id ||
+                      (
+                        pedido.status ===
+                          "aguardando_pagamento" &&
+                        pedido.pagamento !==
+                          "dinheiro"
+                      )
+                    }
+                  >
+                    {processandoPedido ===
+                    pedido.id
+                      ? "Atualizando..."
+                      : pedido.status ===
+                        "aguardando_pagamento"
+                      ? pedido.pagamento ===
+                        "dinheiro"
+                        ? "✅ Confirmar pagamento"
+                        : "⏳ Aguardando Pix"
+                      : pedido.status ===
+                        "pagamento_aprovado"
+                      ? "➡️ Preparar"
+                      : pedido.status ===
+                        "preparando"
+                      ? "📦 Enviar"
+                      : pedido.status ===
+                        "enviado"
+                      ? "✅ Entregar"
+                      : "Avançar"}
+                  </button>
+                )}
+
+                {pedido.status !== "entregue" &&
+                  pedido.status !== "cancelado" && (
+                  <button
+                    type="button"
+                    className="admin-pedido-acao-cancelar"
+                    onClick={() => {
+                      const confirmar =
+                        window.confirm(
+                          `Deseja realmente cancelar o pedido #${
+                            pedido.numeroPedido ||
+                            pedido.id
+                          }?`
+                        );
+
+                      if (!confirmar) {
+                        return;
+                      }
+
+                      alterarStatusPedido(
+                        pedido,
+                        "cancelado"
+                      );
+                    }}
+                    disabled={
+                      processandoPedido ===
+                      pedido.id
+                    }
+                  >
+                    🚫 Cancelar
+                  </button>
+                )}
+
+              </div>
+
+              {pedido.status === "cancelado" && (
+                <div className="admin-pedido-historico">
+
+                  <strong>
+                    🕘 Pedido no histórico
+                  </strong>
+
+                  <p>
+                    Cancelado em:{" "}
+                    {formatarDataHistorico(
+                      pedido.canceladoEm
+                    )}
+                  </p>
+
+                  {obterDiasRestantesHistorico(
+                    pedido
+                  ) === null ? (
+                    <p>
+                      ⚠️ Data de cancelamento não
+                      registrada.
+                    </p>
+                  ) : obterDiasRestantesHistorico(
+                      pedido
+                    ) > 0 ? (
+                    <p>
+                      🔒 Exclusão disponível em{" "}
+                      <strong>
+                        {obterDiasRestantesHistorico(
+                          pedido
+                        )}
+                      </strong>{" "}
+                      dia
+                      {obterDiasRestantesHistorico(
+                        pedido
+                      ) === 1
+                        ? ""
+                        : "s"}.
+                    </p>
+                  ) : (
+                    <p>
+                      🗑️ Exclusão permanente disponível.
+                    </p>
+                  )}
+
+                  <div className="admin-pedido-historico-acoes">
+
                     <button
                       type="button"
                       onClick={() =>
-                        avancarStatusPedido(
+                        reativarPedido(pedido)
+                      }
+                      disabled={
+                        processandoPedido ===
+                        pedido.id
+                      }
+                    >
+                      🔄 Reativar pedido
+                    </button>
+
+                    <button
+                      type="button"
+                      className="admin-pedido-excluir"
+                      onClick={() =>
+                        excluirPedidoPermanentemente(
                           pedido
                         )
                       }
                       disabled={
                         processandoPedido ===
                           pedido.id ||
-                        (
-                          pedido.status ===
-                            "aguardando_pagamento" &&
-                          pedido.pagamento !==
-                            "dinheiro"
+                        !podeExcluirPermanentemente(
+                          pedido
                         )
                       }
-                      style={{
-                        border: "1px solid #ddd",
-                        borderRadius: "10px",
-                        padding: "10px 12px",
-                        background:
-                          (
-                            pedido.status ===
-                              "aguardando_pagamento" &&
-                            pedido.pagamento !==
-                              "dinheiro"
-                          )
-                            ? "#f5f5f5"
-                            : "white",
-                        color:
-                          (
-                            pedido.status ===
-                              "aguardando_pagamento" &&
-                            pedido.pagamento !==
-                              "dinheiro"
-                          )
-                            ? "#999"
-                            : "#222",
-                        cursor:
-                          (
-                            pedido.status ===
-                              "aguardando_pagamento" &&
-                            pedido.pagamento !==
-                              "dinheiro"
-                          )
-                            ? "not-allowed"
-                            : "pointer",
-                        fontWeight: "600",
-                      }}
                     >
-                      {processandoPedido ===
-                      pedido.id
-                        ? "Atualizando..."
-                        : pedido.status ===
-                            "aguardando_pagamento"
-                        ? pedido.pagamento ===
-                          "dinheiro"
-                          ? "✅ Confirmar pagamento"
-                          : "⏳ Aguardando Pix"
-                        : pedido.status ===
-                          "pagamento_aprovado"
-                        ? "➡️ Iniciar preparação"
-                        : pedido.status ===
-                          "preparando"
-                        ? "📦 Marcar como enviado"
-                        : pedido.status ===
-                          "enviado"
-                        ? "✅ Marcar como entregue"
-                        : "Avançar status"}
+                      🗑️ Excluir permanentemente
                     </button>
-                  )}
 
-                {pedido.status !== "entregue" &&
-                  pedido.status !== "cancelado" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const confirmar =
-                          window.confirm(
-                            `Deseja realmente cancelar o pedido #${pedido.numeroPedido}?`
-                          );
+                  </div>
 
-                        if (!confirmar) {
-                          return;
-                        }
-
-                        alterarStatusPedido(
-                          pedido,
-                          "cancelado"
-                        );
-                      }}
-                      disabled={
-                        processandoPedido ===
-                        pedido.id
-                      }
-                      style={{
-                        border: "none",
-                        borderRadius: "10px",
-                        padding: "9px 12px",
-                        background: "#fcebea",
-                        color: "#a33",
-                        cursor: "pointer",
-                        fontWeight: "600",
-                      }}
-                    >
-                      🚫 Cancelar pedido
-                    </button>
-                  )}
-              </div>
-{pedido.status === "cancelado" && (
-            <div className="admin-pedido-historico">
-              <strong>
-                🕘 Pedido no histórico
-              </strong>
-
-              <p>
-                Cancelado em:{" "}
-                {formatarDataHistorico(
-                  pedido.canceladoEm
-                )}
-              </p>
-
-              {obterDiasRestantesHistorico(
-                pedido
-              ) === null ? (
-                <p>
-                  ⚠️ Data de cancelamento não
-                  registrada.
-                </p>
-              ) : obterDiasRestantesHistorico(
-                  pedido
-                ) > 0 ? (
-                <p>
-                  🔒 Exclusão disponível em{" "}
-                  <strong>
-                    {obterDiasRestantesHistorico(
-                      pedido
-                    )}
-                  </strong>{" "}
-                  dia
-                  {obterDiasRestantesHistorico(
-                    pedido
-                  ) === 1
-                    ? ""
-                    : "s"}.
-                </p>
-              ) : (
-                <p>
-                  🗑️ Exclusão permanente disponível.
-                </p>
+                </div>
               )}
-
-              <div className="admin-pedido-historico-acoes">
-                <button
-                  type="button"
-                  onClick={() =>
-                    reativarPedido(pedido)
-                  }
-                  disabled={
-                    processandoPedido ===
-                    pedido.id
-                  }
-                >
-                  🔄 Reativar pedido
-                </button>
-
-                <button
-                  type="button"
-                  className="admin-pedido-excluir"
-                  onClick={() =>
-                    excluirPedidoPermanentemente(
-                      pedido
-                    )
-                  }
-                  disabled={
-                    processandoPedido ===
-                      pedido.id ||
-                    !podeExcluirPermanentemente(
-                      pedido
-                    )
-                  }
-                >
-                  🗑️ Excluir permanentemente
-                </button>
-              </div>
-            </div>
-          )}
-              </div>
-
-              
 
             </article>
           );
@@ -2861,7 +3059,7 @@ const sairDoAdmin = async () => {
   </section>
 )}
 
-      {mostrarPedidos &&
+{mostrarPedidos &&
   pedidoSelecionado && (
     <section
       className="admin-produtos"
@@ -2878,11 +3076,12 @@ const sairDoAdmin = async () => {
           </span>
 
           <h2>
-            #{pedidoSelecionado.numeroPedido}
+            #{pedidoSelecionado.numeroPedido ||
+              pedidoSelecionado.id}
           </h2>
 
           <p>
-            Detalhes completos da compra.
+            Ficha completa do pedido e ações de atendimento.
           </p>
         </div>
 
@@ -2898,141 +3097,447 @@ const sairDoAdmin = async () => {
 
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "20px",
-        }}
-      >
+      <div className="admin-pedido-detalhe-cabecalho">
 
-        {/* CLIENTE */}
+        <div>
+          <span>
+            Status atual
+          </span>
 
-        <div
-          style={{
-            padding: "22px",
-            border:
-              "1px solid #e8e1dc",
-            borderRadius: "16px",
-            background: "#fff",
-          }}
-        >
+          <strong
+            style={{
+              background:
+                (
+                  statusInfo[
+                    pedidoSelecionado.status
+                  ] ||
+                  statusInfo.aguardando_pagamento
+                ).background,
+              color:
+                (
+                  statusInfo[
+                    pedidoSelecionado.status
+                  ] ||
+                  statusInfo.aguardando_pagamento
+                ).color,
+            }}
+          >
+            {
+              (
+                statusInfo[
+                  pedidoSelecionado.status
+                ] ||
+                statusInfo.aguardando_pagamento
+              ).label
+            }
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Pedido realizado
+          </span>
+
+          <strong>
+            {formatarDataPedidoCompleta(
+              pedidoSelecionado.criadoEm
+            )}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Forma de pagamento
+          </span>
+
+          <strong>
+            {obterPagamentoLabel(
+              pedidoSelecionado.pagamento
+            )}
+          </strong>
+        </div>
+
+      </div>
+
+      {pedidoSelecionado.status !== "cancelado" ? (
+        <div className="admin-pedido-andamento">
+
+          <div className="admin-pedido-andamento-titulo">
+            <div>
+              <span className="admin-label">
+                ANDAMENTO
+              </span>
+
+              <h3>
+                Acompanhe o ciclo do pedido
+              </h3>
+            </div>
+          </div>
+
+          <div className="admin-pedido-progresso">
+
+            {[
+              "aguardando_pagamento",
+              "pagamento_aprovado",
+              "preparando",
+              "enviado",
+              "entregue",
+            ].map(
+              (status, index) => {
+
+                const statusAtualIndex =
+                  obterIndiceStatusPedido(
+                    pedidoSelecionado.status
+                  );
+
+                const ativo =
+                  statusAtualIndex >= index;
+
+                return (
+                  <div
+                    key={status}
+                    className={
+                      ativo
+                        ? "admin-pedido-etapa concluida"
+                        : "admin-pedido-etapa"
+                    }
+                  >
+                    <div className="admin-pedido-etapa-ponto">
+                      {ativo ? "✓" : index + 1}
+                    </div>
+
+                    <span>
+                      {statusInfo[status].label}
+                    </span>
+                  </div>
+                );
+              }
+            )}
+
+          </div>
+
+        </div>
+      ) : (
+        <div className="admin-pedido-cancelado-banner">
+
+          <strong>
+            🚫 Pedido cancelado e arquivado
+          </strong>
+
+          <span>
+            Cancelado em{" "}
+            {formatarDataHistorico(
+              pedidoSelecionado.canceladoEm
+            )}
+          </span>
+
+          <span>
+            Status anterior:{" "}
+            {statusInfo[
+              pedidoSelecionado.statusAnterior
+            ]?.label ||
+              "Não registrado"}
+          </span>
+
+        </div>
+      )}
+
+      <div className="admin-pedido-atendimento">
+
+        <div>
+          <span className="admin-label">
+            AÇÕES RÁPIDAS
+          </span>
+
+          <h3>
+            Atendimento do cliente
+          </h3>
+        </div>
+
+        <div className="admin-pedido-atendimento-acoes">
+
+          <button
+            type="button"
+            onClick={() =>
+              abrirWhatsAppPedido(
+                pedidoSelecionado
+              )
+            }
+            disabled={
+              !pedidoSelecionado.cliente
+                ?.whatsapp
+            }
+          >
+            💬 Abrir WhatsApp
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              abrirEmailPedido(
+                pedidoSelecionado
+              )
+            }
+            disabled={
+              !pedidoSelecionado.cliente
+                ?.email
+            }
+          >
+            ✉️ Enviar e-mail
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              copiarParaAreaDeTransferencia(
+                pedidoSelecionado.numeroPedido ||
+                pedidoSelecionado.id
+              )
+            }
+          >
+            📋 Copiar número
+          </button>
+
+          {pedidoSelecionado.status !==
+            "entregue" &&
+            pedidoSelecionado.status !==
+              "cancelado" && (
+            <>
+              <button
+                type="button"
+                className="admin-pedido-acao-principal"
+                onClick={() =>
+                  avancarStatusPedido(
+                    pedidoSelecionado
+                  )
+                }
+                disabled={
+                  processandoPedido ===
+                    pedidoSelecionado.id ||
+                  (
+                    pedidoSelecionado.status ===
+                      "aguardando_pagamento" &&
+                    pedidoSelecionado.pagamento !==
+                      "dinheiro"
+                  )
+                }
+              >
+                {processandoPedido ===
+                pedidoSelecionado.id
+                  ? "Atualizando..."
+                  : pedidoSelecionado.status ===
+                    "aguardando_pagamento"
+                  ? pedidoSelecionado.pagamento ===
+                    "dinheiro"
+                    ? "✅ Confirmar pagamento"
+                    : "⏳ Aguardando confirmação do Pix"
+                  : pedidoSelecionado.status ===
+                    "pagamento_aprovado"
+                  ? "➡️ Iniciar preparação"
+                  : pedidoSelecionado.status ===
+                    "preparando"
+                  ? "📦 Marcar como enviado"
+                  : pedidoSelecionado.status ===
+                    "enviado"
+                  ? "✅ Marcar como entregue"
+                  : "Avançar status"}
+              </button>
+
+              <button
+                type="button"
+                className="admin-pedido-acao-cancelar"
+                onClick={() => {
+                  const confirmar =
+                    window.confirm(
+                      `Deseja realmente cancelar o pedido #${
+                        pedidoSelecionado.numeroPedido ||
+                        pedidoSelecionado.id
+                      }?`
+                    );
+
+                  if (!confirmar) {
+                    return;
+                  }
+
+                  alterarStatusPedido(
+                    pedidoSelecionado,
+                    "cancelado"
+                  );
+                }}
+                disabled={
+                  processandoPedido ===
+                  pedidoSelecionado.id
+                }
+              >
+                🚫 Cancelar pedido
+              </button>
+            </>
+          )}
+
+          {pedidoSelecionado.status ===
+            "cancelado" && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  reativarPedido(
+                    pedidoSelecionado
+                  )
+                }
+                disabled={
+                  processandoPedido ===
+                  pedidoSelecionado.id
+                }
+              >
+                🔄 Reativar pedido
+              </button>
+
+              <button
+                type="button"
+                className="admin-pedido-excluir"
+                onClick={() =>
+                  excluirPedidoPermanentemente(
+                    pedidoSelecionado
+                  )
+                }
+                disabled={
+                  processandoPedido ===
+                    pedidoSelecionado.id ||
+                  !podeExcluirPermanentemente(
+                    pedidoSelecionado
+                  )
+                }
+              >
+                🗑️ Excluir permanentemente
+              </button>
+            </>
+          )}
+
+        </div>
+
+      </div>
+
+      <div className="admin-pedido-detalhe-grid">
+
+        <div className="admin-pedido-info-box">
+
           <h3>
             👤 Cliente
           </h3>
 
           <p>
             <strong>Nome:</strong>{" "}
-            {pedidoSelecionado.cliente
-              ?.nome ||
+            {pedidoSelecionado.cliente?.nome ||
               "Não informado"}
           </p>
 
           <p>
             <strong>WhatsApp:</strong>{" "}
-            {pedidoSelecionado.cliente
-              ?.whatsapp ||
+            {pedidoSelecionado.cliente?.whatsapp ||
               "Não informado"}
           </p>
 
           <p>
             <strong>E-mail:</strong>{" "}
-            {pedidoSelecionado.cliente
-              ?.email ||
+            {pedidoSelecionado.cliente?.email ||
               "Não informado"}
           </p>
+
         </div>
 
-        {/* PAGAMENTO */}
+        <div className="admin-pedido-info-box">
 
-        <div
-          style={{
-            padding: "22px",
-            border:
-              "1px solid #e8e1dc",
-            borderRadius: "16px",
-            background: "#fff",
-          }}
-        >
           <h3>
             💳 Pagamento
           </h3>
 
           <p>
             <strong>Forma:</strong>{" "}
-            {pedidoSelecionado.pagamento ===
-            "pix"
-              ? "Pix"
-              : pedidoSelecionado.pagamento ===
-                "cartao"
-              ? "Cartão"
-              : pedidoSelecionado.pagamento ===
-                "dinheiro"
-              ? "Dinheiro"
-              : pedidoSelecionado.pagamento ||
-                "Não informado"}
+            {obterPagamentoLabel(
+              pedidoSelecionado.pagamento
+            )}
           </p>
 
           <p>
             <strong>Status:</strong>{" "}
-            {statusInfo[
-              pedidoSelecionado.status
-            ]?.label ||
-              "Status não informado"}
+            {
+              (
+                statusInfo[
+                  pedidoSelecionado.status
+                ] ||
+                statusInfo.aguardando_pagamento
+              ).label
+            }
           </p>
+
+          <p>
+            <strong>Estoque:</strong>{" "}
+            {pedidoSelecionado.estoqueBaixado ===
+            true
+              ? "Baixado"
+              : "Ainda não baixado"}
+          </p>
+
+          <p>
+            <strong>Subtotal:</strong>{" "}
+            R${" "}
+            {Number(
+              pedidoSelecionado.subtotal || 0
+            )
+              .toFixed(2)
+              .replace(".", ",")}
+          </p>
+
+          <p>
+            <strong>Total:</strong>{" "}
+            R${" "}
+            {Number(
+              pedidoSelecionado.total || 0
+            )
+              .toFixed(2)
+              .replace(".", ",")}
+          </p>
+
         </div>
 
-        {/* ENTREGA */}
+        <div className="admin-pedido-info-box">
 
-        <div
-          style={{
-            padding: "22px",
-            border:
-              "1px solid #e8e1dc",
-            borderRadius: "16px",
-            background: "#fff",
-          }}
-        >
           <h3>
             📍 Entrega
           </h3>
 
           <p>
             <strong>Tipo:</strong>{" "}
-            {pedidoSelecionado.entrega
-              ?.forma === "retirada"
+            {pedidoSelecionado.entrega?.forma ===
+            "retirada"
               ? "Retirada"
               : "Entrega"}
           </p>
 
-          {pedidoSelecionado.entrega
-            ?.forma === "entrega" && (
+          {pedidoSelecionado.entrega?.forma ===
+            "entrega" && (
             <>
               <p>
                 <strong>CEP:</strong>{" "}
-                {pedidoSelecionado.entrega
-                  ?.cep}
+                {pedidoSelecionado.entrega?.cep ||
+                  "Não informado"}
               </p>
 
               <p>
                 <strong>Endereço:</strong>{" "}
-                {pedidoSelecionado.entrega
-                  ?.rua}
+                {pedidoSelecionado.entrega?.rua ||
+                  "Não informado"}
                 ,{" "}
-                {pedidoSelecionado.entrega
-                  ?.numero}
+                {pedidoSelecionado.entrega?.numero ||
+                  "S/N"}
               </p>
 
               {pedidoSelecionado.entrega
                 ?.complemento && (
                 <p>
-                  <strong>
-                    Complemento:
-                  </strong>{" "}
+                  <strong>Complemento:</strong>{" "}
                   {
-                    pedidoSelecionado
-                      .entrega
+                    pedidoSelecionado.entrega
                       .complemento
                   }
                 </p>
@@ -3040,237 +3545,154 @@ const sairDoAdmin = async () => {
 
               <p>
                 <strong>Bairro:</strong>{" "}
-                {
-                  pedidoSelecionado
-                    .entrega
-                    .bairro
-                }
+                {pedidoSelecionado.entrega?.bairro ||
+                  "Não informado"}
               </p>
 
               <p>
                 <strong>Cidade:</strong>{" "}
-                {
-                  pedidoSelecionado
-                    .entrega
-                    .cidade
-                }{" "}
+                {pedidoSelecionado.entrega?.cidade ||
+                  "Não informado"}{" "}
                 -{" "}
-                {
-                  pedidoSelecionado
-                    .entrega
-                    .estado
-                }
+                {pedidoSelecionado.entrega?.estado ||
+                  ""}
               </p>
+
+              <button
+                type="button"
+                className="admin-pedido-copiar-endereco"
+                onClick={() =>
+                  copiarParaAreaDeTransferencia(
+                    [
+                      pedidoSelecionado.entrega?.rua,
+                      pedidoSelecionado.entrega?.numero,
+                      pedidoSelecionado.entrega?.complemento,
+                      pedidoSelecionado.entrega?.bairro,
+                      pedidoSelecionado.entrega?.cidade,
+                      pedidoSelecionado.entrega?.estado,
+                      pedidoSelecionado.entrega?.cep,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")
+                  )
+                }
+              >
+                📋 Copiar endereço
+              </button>
             </>
           )}
+
         </div>
 
       </div>
 
-      {pedidoSelecionado.status !==
-    "entregue" &&
-  pedidoSelecionado.status !==
-    "cancelado" && (
-    <div
-      style={{
-        marginTop: "20px",
-        padding: "20px",
-        border: "1px solid #e8e1dc",
-        borderRadius: "16px",
-        background: "#fff",
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px",
-      }}
-    >
-      <button
-        type="button"
-        onClick={() =>
-          avancarStatusPedido(
-            pedidoSelecionado
-          )
-        }
-        disabled={
-          processandoPedido ===
-            pedidoSelecionado.id ||
-          (
-            pedidoSelecionado.status ===
-              "aguardando_pagamento" &&
-            pedidoSelecionado.pagamento !==
-              "dinheiro"
-          )
-        }
-        style={{
-          border: "none",
-          borderRadius: "10px",
-          padding: "12px 18px",
-          background: "#222",
-          color: "white",
-          cursor: "pointer",
-          fontWeight: "600",
-        }}
-      >
-        {processandoPedido ===
-        pedidoSelecionado.id
-          ? "Atualizando..."
-          : pedidoSelecionado.status ===
-              "aguardando_pagamento"
-          ? pedidoSelecionado.pagamento ===
-            "dinheiro"
-            ? "✅ Confirmar pagamento"
-            : "⏳ Aguardando confirmação do Pix"
-          : pedidoSelecionado.status ===
-            "pagamento_aprovado"
-          ? "➡️ Iniciar preparação"
-          : pedidoSelecionado.status ===
-            "preparando"
-          ? "📦 Marcar como enviado"
-          : pedidoSelecionado.status ===
-            "enviado"
-          ? "✅ Marcar como entregue"
-          : "Avançar status"}
-      </button>
+      <div className="admin-pedido-produtos-detalhe">
 
-      <button
-        type="button"
-        onClick={() => {
-          const confirmar =
-            window.confirm(
-              `Deseja realmente cancelar o pedido #${pedidoSelecionado.numeroPedido}?`
-            );
+        <div className="admin-pedido-andamento-titulo">
+          <div>
+            <span className="admin-label">
+              ITENS
+            </span>
 
-          if (!confirmar) {
-            return;
-          }
+            <h3>
+              Produtos do pedido
+            </h3>
+          </div>
 
-          alterarStatusPedido(
-            pedidoSelecionado,
-            "cancelado"
-          );
-        }}
-        disabled={
-          processandoPedido ===
-          pedidoSelecionado.id
-        }
-        style={{
-          border: "none",
-          borderRadius: "10px",
-          padding: "12px 18px",
-          background: "#fcebea",
-          color: "#a33",
-          cursor: "pointer",
-          fontWeight: "600",
-        }}
-      >
-        🚫 Cancelar pedido
-      </button>
-    </div>
-  )}
+          <strong>
+            {Array.isArray(
+              pedidoSelecionado.itens
+            )
+              ? pedidoSelecionado.itens.reduce(
+                  (total, item) =>
+                    total +
+                    Number(
+                      item.quantidade || 0
+                    ),
+                  0
+                )
+              : 0}{" "}
+            {(
+              Array.isArray(
+                pedidoSelecionado.itens
+              )
+                ? pedidoSelecionado.itens.reduce(
+                    (total, item) =>
+                      total +
+                      Number(
+                        item.quantidade || 0
+                      ),
+                    0
+                  )
+                : 0
+            ) === 1
+              ? "unidade"
+              : "unidades"}
+          </strong>
+        </div>
 
-      {/* PRODUTOS DO PEDIDO */}
-
-      <div
-        style={{
-          marginTop: "25px",
-          padding: "22px",
-          border:
-            "1px solid #e8e1dc",
-          borderRadius: "16px",
-          background: "#fff",
-        }}
-      >
-
-        <h3>
-          🛍️ Produtos
-        </h3>
-
-        <div
-          style={{
-            display: "grid",
-            gap: "15px",
-          }}
-        >
+        <div className="admin-pedido-itens-lista">
 
           {pedidoSelecionado.itens?.map(
-            (item) => (
+            (item, index) => (
               <div
-                key={item.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "15px",
-                  padding:
-                    "15px 0",
-                  borderBottom:
-                    "1px solid #eee",
-                }}
+                key={`${item.id || item.produtoId || "item"}-${index}`}
+                className="admin-pedido-item-detalhe"
               >
 
-                {item.imagem && (
+                {item.imagem ? (
                   <img
                     src={item.imagem}
                     alt={item.nome}
-                    style={{
-                      width: "70px",
-                      height: "85px",
-                      objectFit:
-                        "cover",
-                      borderRadius:
-                        "10px",
-                    }}
                   />
+                ) : (
+                  <div className="admin-pedido-item-sem-imagem">
+                    🛍️
+                  </div>
                 )}
 
-                <div
-                  style={{
-                    flex: 1,
-                  }}
-                >
+                <div className="admin-pedido-item-conteudo">
+
                   <strong>
-                    {item.nome}
+                    {item.nome ||
+                      "Produto"}
                   </strong>
 
-                  <span
-                    style={{
-                      display:
-                        "block",
-                      marginTop:
-                        "5px",
-                      color:
-                        "#777",
-                      fontSize:
-                        "0.9rem",
-                    }}
-                  >
-                    Cor: {item.cor}{" "}
-                    · Tamanho:{" "}
-                    {item.tamanho}
+                  <span>
+                    Cor:{" "}
+                    {item.cor ||
+                      "Não informada"}
                   </span>
 
-                  <span
-                    style={{
-                      display:
-                        "block",
-                      marginTop:
-                        "3px",
-                      color:
-                        "#777",
-                      fontSize:
-                        "0.9rem",
-                    }}
-                  >
-                    Quantidade:{" "}
-                    {item.quantidade}
+                  <span>
+                    Tamanho:{" "}
+                    {item.tamanho ||
+                      "Não informado"}
                   </span>
+
+                  <span>
+                    Quantidade:{" "}
+                    {item.quantidade || 0}
+                  </span>
+
+                  <span>
+                    Preço unitário:{" "}
+                    R${" "}
+                    {Number(
+                      item.preco || 0
+                    )
+                      .toFixed(2)
+                      .replace(".", ",")}
+                  </span>
+
                 </div>
 
-                <strong>
+                <strong className="admin-pedido-item-subtotal">
                   R${" "}
                   {Number(
-                    item.subtotal ||
-                      item.preco *
-                        item.quantidade ||
-                      0
+                    item.subtotal ??
+                    Number(item.preco || 0) *
+                      Number(item.quantidade || 0)
                   )
                     .toFixed(2)
                     .replace(".", ",")}
@@ -3282,72 +3704,36 @@ const sairDoAdmin = async () => {
 
         </div>
 
-        <div
-          style={{
-            marginTop: "20px",
-            paddingTop: "20px",
-            borderTop:
-              "1px solid #ddd",
-            display: "flex",
-            justifyContent:
-              "flex-end",
-          }}
-        >
+        <div className="admin-pedido-totais">
 
-          <div
-            style={{
-              minWidth: "220px",
-            }}
-          >
+          <div>
+            <span>
+              Subtotal
+            </span>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent:
-                  "space-between",
-                marginBottom:
-                  "8px",
-              }}
-            >
-              <span>
-                Subtotal
-              </span>
+            <strong>
+              R${" "}
+              {Number(
+                pedidoSelecionado.subtotal || 0
+              )
+                .toFixed(2)
+                .replace(".", ",")}
+            </strong>
+          </div>
 
-              <strong>
-                R${" "}
-                {Number(
-                  pedidoSelecionado
-                    .subtotal || 0
-                )
-                  .toFixed(2)
-                  .replace(".", ",")}
-              </strong>
-            </div>
+          <div className="admin-pedido-total-final">
+            <span>
+              Total
+            </span>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent:
-                  "space-between",
-                fontSize:
-                  "1.1rem",
-              }}
-            >
-              <strong>
-                Total
-              </strong>
-
-              <strong>
-                R${" "}
-                {Number(
-                  pedidoSelecionado
-                    .total || 0
-                )
-                  .toFixed(2)
-                  .replace(".", ",")}
-              </strong>
-            </div>
-
+            <strong>
+              R${" "}
+              {Number(
+                pedidoSelecionado.total || 0
+              )
+                .toFixed(2)
+                .replace(".", ",")}
+            </strong>
           </div>
 
         </div>
